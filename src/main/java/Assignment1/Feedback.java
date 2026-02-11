@@ -8,16 +8,18 @@ public class Feedback {
     private int rating;
     private String comments;
     private String createdAt;   // ✅ changed from Timestamp → String
+	private String userName;
 
     public Feedback() {} // ✅ REQUIRED for JSON-B
 
     public Feedback(int feedbackId, String userId, int serviceId, int rating,
-                    String comments, String createdAt) {
+                    String comments, String createdAt, String userName) {
         this.feedbackId = feedbackId;
         this.userId = userId;
         this.serviceId = serviceId;
         this.rating = rating;
         this.comments = comments;
+        this.userName = userName;
         this.createdAt = createdAt;
     }
 
@@ -38,4 +40,7 @@ public class Feedback {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+	public String getUserName() { return userName; }
+	public void setUserName(String userName) { this.userName = userName; }
 }
