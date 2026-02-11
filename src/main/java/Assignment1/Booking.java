@@ -1,7 +1,7 @@
 package Assignment1;
 
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class Booking {
 	private int bookingId;
@@ -66,8 +66,14 @@ public class Booking {
 	}
 
 	@Override
-	public String toString() {
-		return "Booking [bookingId=" + bookingId + ", scheduledAt=" + scheduledAt + ", status=" + status + ", notes="
-				+ notes + ", bookingDetails=" + bookingDetails + "]";
-	}
+public String toString() {
+    return "Booking{" +
+            "bookingId=" + bookingId +
+            ", scheduledAt=" + scheduledAt +
+            ", status='" + status + '\'' +
+            ", notes='" + notes + '\'' +
+            ", bookingDetails=" + bookingDetails +
+            '}';
+}
+
 }

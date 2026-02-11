@@ -1,37 +1,47 @@
 package Assignment1;
 
 public class Country {
-	private int id;
-	private String countryCode;
-	private String countryName;
-	private String iso2;
-	private String flagImage;
 
-	public Country(int id, String countryCode, String countryName, String iso2, String flagImage) {
-		this.id = id;
-		this.countryCode = countryCode;
-		this.countryName = countryName;
-		this.iso2 = iso2;
-		this.flagImage = flagImage;
-	}
+    private int id;
+    private int countryCode;
+    private String countryName;
+    private String iso2;
+    private String flagImage;
 
-	public int getId() {
-		return id;
-	}
+    // ✅ Required for JSON mapping
+    public Country() {}
 
-	public String getCountryCode() {
-		return countryCode;
-	}
+    // Optional constructor
+    public Country(int id, int countryCode, String countryName, String iso2, String flagImage) {
+        this.id = id;
+        this.countryCode = countryCode;
+        this.countryName = countryName;
+        this.iso2 = iso2;
+        this.flagImage = flagImage;
+    }
 
-	public String getCountryName() {
-		return countryName;
-	}
+    // ===== Getters =====
+    public int getId() { return id; }
+    public int getCountryCode() { return countryCode; }
+    public String getCountryName() { return countryName; }
+    public String getIso2() { return iso2; }
+    public String getFlagImage() { return flagImage; }
 
-	public String getIso2() {
-		return iso2;
-	}
+    // ===== Setters =====
+    public void setId(int id) { this.id = id; }
+    public void setCountryCode(int countryCode) { this.countryCode = countryCode; }
+    public void setCountryName(String countryName) { this.countryName = countryName; }
+    public void setIso2(String iso2) { this.iso2 = iso2; }
+    public void setFlagImage(String flagImage) { this.flagImage = flagImage; }
 
-	public String getFlagImage() {
-		return flagImage;
-	}
+    @Override
+    public String toString() {
+        return "Country{" +
+                "id=" + id +
+                ", countryCode=" + countryCode +
+                ", countryName='" + countryName + '\'' +
+                ", iso2='" + iso2 + '\'' +
+                ", flagImage='" + flagImage + '\'' +
+                '}';
+    }
 }
