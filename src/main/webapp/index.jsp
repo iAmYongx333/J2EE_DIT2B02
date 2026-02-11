@@ -1,5 +1,4 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ include file="utils/db.jsp" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -106,46 +105,10 @@
       Designed to deliver calm, confidence and comfort — with a consistent Scandinavian simplicity.
     </p>
 
-	<%
-	  Connection conn = (Connection) request.getAttribute("conn");
-	  String sql = "SELECT service_id, service_name, description, image_path FROM service ORDER BY service_id LIMIT 3";
-	  PreparedStatement ps = conn.prepareStatement(sql);
-	  ResultSet rs = ps.executeQuery();
-	  String ctx = request.getContextPath();
-	%>
-	
-	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-	  <% while (rs.next()) {
-	       String img = rs.getString("image_path");
-	
-	       // Normalise: if null/blank, use default; ensure leading slash
-	       if (img == null || img.trim().isEmpty()) {
-	         img = "/images/default-service.png";
-	       } else if (!img.startsWith("/")) {
-	         img = "/" + img;
-	       }
-	
-	       String imgSrc = ctx + img;
-	  %>
-	    <div class="group bg-white rounded-3xl shadow-sm border border-[#e9e5df]
-	                hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
-	      <img src="<%= imgSrc %>"
-	           class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105">
-	
-	      <div class="p-8 text-left">
-	        <h3 class="text-xl sm:text-2xl font-serif font-semibold text-[#1e2a38] mb-3">
-	          <%= rs.getString("service_name") %>
-	        </h3>
-	        <p class="text-slate-600 text-sm leading-relaxed">
-	          <%= rs.getString("description") %>
-	        </p>
-	      </div>
-	    </div>
-	  <% } %>
+	<div id="services-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+	  <!-- Services will be loaded dynamically via JavaScript -->
+	  <div class="col-span-full text-slate-500">Loading services...</div>
 	</div>
-	<%
-	  conn.close();
-	%>
 
     <div class="mt-12">
       <a href="<%=request.getContextPath()%>/public/services.jsp" class="text-[#1e2a38] font-medium hover:underline">View all services →</a>
@@ -186,6 +149,90 @@
   }
   window.addEventListener('scroll', revealOnScroll);
   window.addEventListener('load', revealOnScroll);
+
+  // Fetch services from Spring Boot backend
+  const API_BASE_URL = 'http://localhost:8081/api';
+  const ctx = '<%=request.getContextPath()%>';
+  
+  console.log('API_BASE_URL:', API_BASE_URL);  // Debug log
+
+  // Utility function to escape HTML and prevent XSS
+  function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Validate and sanitize image path
+  function sanitizeImagePath(img) {
+    if (!img || img.trim() === '') {
+      return '/images/default-service.png';
+    }
+    // Only allow alphanumeric, slashes, dots, hyphens, underscores
+    const sanitized = img.replace(/[^a-zA-Z0-9\/.\-_]/g, '');
+    return sanitized.startsWith('/') ? sanitized : '/' + sanitized;
+  }
+
+  async function loadServices() {
+    const container = document.getElementById('services-container');
+    const fetchUrl = API_BASE_URL + '/services';
+    console.log('Fetching services from:', fetchUrl);
+    
+    try {
+      const response = await fetch(fetchUrl, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch services: ' + response.status);
+      }
+      
+      const services = await response.json();
+      
+      // Validate response is an array
+      if (!Array.isArray(services)) {
+        throw new Error('Invalid response format');
+      }
+      
+      // Display only first 3 services
+      const displayServices = services.slice(0, 3);
+      
+      if (displayServices.length === 0) {
+        container.innerHTML = '<div class="col-span-full text-slate-500">No services available.</div>';
+        return;
+      }
+      
+      container.innerHTML = displayServices.map(service => {
+        // Sanitize all output
+        const imgPath = sanitizeImagePath(service.imagePath || service.image_path);
+        const imgSrc = ctx + imgPath;
+        const serviceName = escapeHtml(service.serviceName || service.service_name || 'Service');
+        const description = escapeHtml(service.description || '');
+        
+        return '<div class="group bg-white rounded-3xl shadow-sm border border-[#e9e5df] hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">' +
+            '<img src="' + imgSrc + '" class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src=\'' + ctx + '/images/default-service.png\'">' +
+            '<div class="p-8 text-left">' +
+              '<h3 class="text-xl sm:text-2xl font-serif font-semibold text-[#1e2a38] mb-3">' + serviceName + '</h3>' +
+              '<p class="text-slate-600 text-sm leading-relaxed">' + description + '</p>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+      
+    } catch (error) {
+      console.error('Error loading services:', error);
+      container.innerHTML = '<div class="col-span-full text-red-500">Failed to load services. Please try again later.</div>';
+    }
+  }
+
+  // Load services when page loads
+  document.addEventListener('DOMContentLoaded', loadServices);
 </script>
 
 </body>
