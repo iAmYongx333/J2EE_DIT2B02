@@ -7,13 +7,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 
-import Assignment1.DBUtil;
 import Assignment1.Service.Service;
+import Assignment1.api.ApiClient;
 
+/**
+ * Admin servlet for editing a service via API.
+ * URL: /admin/services/edit
+ */
 @WebServlet("/admin/services/edit")
 public class AdminServiceEditServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -27,28 +28,19 @@ public class AdminServiceEditServlet extends HttpServlet {
 
 		try {
 			int serviceId = Integer.parseInt(request.getParameter("id"));
-			Connection conn = DBUtil.getConnection();
 
-			String sqlStr = "SELECT * FROM service WHERE service_id = ?";
-			PreparedStatement pstmt = conn.prepareStatement(sqlStr);
-			pstmt.setInt(1, serviceId);
+			// Fetch service from API
+			Service service = ApiClient.get("/services/" + serviceId, Service.class);
 
-			ResultSet rs = pstmt.executeQuery();
-
-			if (rs.next()) {
-				Service s = new Service(rs.getInt("service_id"), rs.getInt("category_id"), rs.getString("service_name"),
-						rs.getString("description"), rs.getDouble("price"), rs.getInt("duration_min"),
-						rs.getString("image_path"));
-
-				request.setAttribute("service", s);
+			if (service != null) {
+				request.setAttribute("service", service);
 			}
 
-			conn.close();
 			request.getRequestDispatcher("/admin/adminEditService.jsp").forward(request, response);
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			response.sendRedirect(request.getContextPath() + "/admin/services/list?errCode=" + e);
+			response.sendRedirect(request.getContextPath() + "/admin/services/list?errCode=API_ERROR");
 		}
 	}
 
@@ -56,8 +48,6 @@ public class AdminServiceEditServlet extends HttpServlet {
 			throws ServletException, IOException {
 
 		try {
-			Connection conn = DBUtil.getConnection();
-
 			int serviceId = Integer.parseInt(request.getParameter("service_id"));
 			int categoryId = Integer.parseInt(request.getParameter("category_id"));
 			String name = request.getParameter("service_name");
@@ -66,27 +56,21 @@ public class AdminServiceEditServlet extends HttpServlet {
 			int duration = Integer.parseInt(request.getParameter("duration_min"));
 			String imagePath = request.getParameter("image_path");
 
-			String sqlStr = "UPDATE service SET category_id=?, service_name=?, description=?, price=?, duration_min=?, image_path=? "
-					+ "WHERE service_id=?";
+			// Build service object
+			Service service = new Service(serviceId, categoryId, name, description, price, duration, imagePath);
 
-			PreparedStatement pstmt = conn.prepareStatement(sqlStr);
+			// PUT to API
+			int status = ApiClient.put("/services/" + serviceId, service);
 
-			pstmt.setInt(1, categoryId);
-			pstmt.setString(2, name);
-			pstmt.setString(3, description);
-			pstmt.setDouble(4, price);
-			pstmt.setInt(5, duration);
-			pstmt.setString(6, imagePath);
-			pstmt.setInt(7, serviceId);
-
-			pstmt.executeUpdate();
-			conn.close();
-
-			response.sendRedirect(request.getContextPath() + "/admin/services/list");
+			if (status == 200) {
+				response.sendRedirect(request.getContextPath() + "/admin/services/list");
+			} else {
+				response.sendRedirect(request.getContextPath() + "/admin/services/list?errCode=UpdateFailed");
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			response.sendRedirect(request.getContextPath() + "/admin/services/list?errCode=" + e);
+			response.sendRedirect(request.getContextPath() + "/admin/services/list?errCode=API_ERROR");
 		}
 	}
 }

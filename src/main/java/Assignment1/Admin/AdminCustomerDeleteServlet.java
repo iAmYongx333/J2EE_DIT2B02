@@ -8,11 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 
-import Assignment1.DBUtil;
+import Assignment1.api.ApiClient;
 
+/**
+ * Admin servlet for deleting a customer via API.
+ * URL: /admin/customers/delete
+ */
 @WebServlet("/admin/customers/delete")
 public class AdminCustomerDeleteServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -34,16 +36,19 @@ public class AdminCustomerDeleteServlet extends HttpServlet {
 			return;
 		}
 
-		try (Connection conn = DBUtil.getConnection()) {
-			String sql = "DELETE FROM users WHERE user_id = ?";
-			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setObject(1, java.util.UUID.fromString(userId));
-			pstmt.executeUpdate();
+		try {
+			// DELETE via API
+			int status = ApiClient.delete("/customers/" + userId);
 
-			response.sendRedirect(request.getContextPath() + "/admin/customers/list?msg=Deleted");
+			if (status == 200 || status == 204) {
+				response.sendRedirect(request.getContextPath() + "/admin/customers/list?msg=Deleted");
+			} else {
+				response.sendRedirect(request.getContextPath() + "/admin/customers/list?errCode=DeleteFailed");
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
-			response.sendRedirect(request.getContextPath() + "/admin/customers/list?errCode=DeleteFailed");
+			response.sendRedirect(request.getContextPath() + "/admin/customers/list?errCode=API_ERROR");
 		}
 	}
 }

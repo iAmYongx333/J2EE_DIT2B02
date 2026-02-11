@@ -1,8 +1,11 @@
 package Assignment1.api;
 
 import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.util.ArrayList;
 
 public class ApiClient {
 
@@ -10,7 +13,7 @@ public class ApiClient {
 
     private static Client client = ClientBuilder.newClient();
 
-    // ---------- GET ----------
+    // ---------- GET (single object) ----------
     public static <T> T get(String path, Class<T> responseType) {
         WebTarget target = client.target(BASE_URL + path);
         Response response = target.request(MediaType.APPLICATION_JSON).get();
@@ -21,7 +24,18 @@ public class ApiClient {
         return null;
     }
 
-    // ---------- POST ----------
+    // ---------- GET (list) ----------
+    public static <T> ArrayList<T> getList(String path, GenericType<ArrayList<T>> genericType) {
+        WebTarget target = client.target(BASE_URL + path);
+        Response response = target.request(MediaType.APPLICATION_JSON).get();
+
+        if (response.getStatus() == 200) {
+            return response.readEntity(genericType);
+        }
+        return new ArrayList<>();
+    }
+
+    // ---------- POST (returns object) ----------
     public static <T> T post(String path, Object body, Class<T> responseType) {
         WebTarget target = client.target(BASE_URL + path);
         Response response = target.request(MediaType.APPLICATION_JSON)
@@ -31,6 +45,15 @@ public class ApiClient {
             return response.readEntity(responseType);
         }
         return null;
+    }
+
+    // ---------- POST (returns status code) ----------
+    public static int post(String path, Object body) {
+        WebTarget target = client.target(BASE_URL + path);
+        Response response = target.request(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(body, MediaType.APPLICATION_JSON));
+
+        return response.getStatus();
     }
 
     // ---------- PUT ----------

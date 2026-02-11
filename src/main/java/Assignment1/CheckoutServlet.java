@@ -8,14 +8,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import Assignment1.api.ApiClient;
+import Assignment1.dto.CheckoutRequest;
+import Assignment1.dto.CheckoutRequest.CheckoutItem;
+
+/**
+ * Servlet for processing checkout via API.
+ * URL: /cart/checkout
+ */
 @WebServlet("/cart/checkout")
 public class CheckoutServlet extends HttpServlet {
 
@@ -63,7 +67,7 @@ public class CheckoutServlet extends HttpServlet {
 		String notes = request.getParameter("notes");
 		String preferredTime = request.getParameter("preferred_time");
 
-		// Optionally fold preferred time into notes so you still capture it
+		// Fold preferred time into notes
 		String finalNotes = notes;
 		if (preferredTime != null && !preferredTime.isBlank()) {
 			if (finalNotes == null || finalNotes.isBlank()) {
@@ -73,54 +77,37 @@ public class CheckoutServlet extends HttpServlet {
 			}
 		}
 
-		// 3) DB insert
-		try (Connection conn = DBUtil.getConnection()) {
-			conn.setAutoCommit(false);
+		// 3) Build checkout request
+		List<CheckoutItem> checkoutItems = new ArrayList<>();
+		for (CartItem item : cart) {
+			checkoutItems.add(new CheckoutItem(
+				item.getServiceId(),
+				item.getQuantity(),
+				item.getUnitPrice()
+			));
+		}
 
-			// Insert booking header
-			String insertBookingSql = "INSERT INTO booking (user_id, scheduled_at, status, notes) "
-					+ "VALUES (?, ?, ?, ?) RETURNING booking_id";
+		CheckoutRequest checkoutRequest = new CheckoutRequest(
+			userId,
+			serviceDateStr,
+			finalNotes,
+			checkoutItems
+		);
 
-			int bookingId;
-			try (PreparedStatement bookingStmt = conn.prepareStatement(insertBookingSql)) {
-				bookingStmt.setObject(1, userId);
-				bookingStmt.setDate(2, Date.valueOf(serviceDateStr)); // yyyy-MM-dd from <input type="date">
-				bookingStmt.setString(3, "PENDING");
-				bookingStmt.setString(4, finalNotes);
+		// 4) POST to API
+		try {
+			int status = ApiClient.post("/bookings/checkout", checkoutRequest);
 
-				try (ResultSet rs = bookingStmt.executeQuery()) {
-					if (!rs.next()) {
-						conn.rollback();
-						throw new ServletException("Failed to create booking header");
-					}
-					bookingId = rs.getInt("booking_id");
-				}
+			if (status == 200 || status == 201) {
+				// Clear cart and redirect to bookings
+				session.removeAttribute("cart");
+				response.sendRedirect(request.getContextPath() + "/customer/bookings");
+			} else {
+				response.sendRedirect(request.getContextPath() + "/customer/cart.jsp?errCode=CheckoutFailed");
 			}
-
-			// Insert booking_detail rows
-			String insertDetailSql = "INSERT INTO booking_detail (booking_id, service_id, quantity, unit_price) "
-					+ "VALUES (?, ?, ?, ?)";
-
-			try (PreparedStatement detailStmt = conn.prepareStatement(insertDetailSql)) {
-				for (CartItem item : cart) {
-					detailStmt.setInt(1, bookingId);
-					detailStmt.setInt(2, item.getServiceId());
-					detailStmt.setInt(3, item.getQuantity());
-					detailStmt.setBigDecimal(4, BigDecimal.valueOf(item.getUnitPrice()));
-					detailStmt.addBatch();
-				}
-				detailStmt.executeBatch();
-			}
-
-			conn.commit();
-			conn.setAutoCommit(true);
-
-			// 4) Clear cart + go to bookings page (servlet)
-			session.removeAttribute("cart");
-			response.sendRedirect(request.getContextPath() + "/customer/bookings");
 
 		} catch (Exception e) {
-			e.printStackTrace(); // check your Tomcat console if it still fails
+			e.printStackTrace();
 			response.sendRedirect(request.getContextPath() + "/customer/cart.jsp?errCode=CheckoutError");
 		}
 	}

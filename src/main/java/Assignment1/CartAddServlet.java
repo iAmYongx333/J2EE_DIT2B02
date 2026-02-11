@@ -8,12 +8,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import Assignment1.api.ApiClient;
+import Assignment1.Service.Service;
+
+/**
+ * Servlet for adding items to cart via API.
+ * URL: /cart/add
+ */
 @WebServlet("/cart/add")
 public class CartAddServlet extends HttpServlet {
 
@@ -31,31 +35,24 @@ public class CartAddServlet extends HttpServlet {
 				quantity = Integer.parseInt(quantityParam);
 			}
 
-			// 1) Get service details from DB
-			String sql = "SELECT s.service_id, s.service_name, s.price, " + "c.category_name " + "FROM service s "
-					+ "JOIN service_category c ON s.category_id = c.category_id " + "WHERE s.service_id = ?";
+			// 1) Get service details from API
+			Service service = ApiClient.get("/services/" + serviceId, Service.class);
 
-			Connection conn = DBUtil.getConnection();
-			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(1, serviceId);
-			ResultSet rs = pstmt.executeQuery();
-
-			if (!rs.next()) {
-				// Service not found – just redirect back or show error
-				rs.close();
-				pstmt.close();
-				conn.close();
-				response.sendRedirect(request.getHeader("Referer")); // back to previous page
+			if (service == null) {
+				// Service not found – redirect back
+				response.sendRedirect(request.getHeader("Referer"));
 				return;
 			}
 
-			String serviceName = rs.getString("service_name");
-			String categoryName = rs.getString("category_name");
-			double unitPrice = rs.getDouble("price");
+			String serviceName = service.getServiceName();
+			double unitPrice = service.getPrice();
 
-			rs.close();
-			pstmt.close();
-			conn.close();
+			// Get category name from API (optional, use categoryId as fallback)
+			String categoryName = "Category " + service.getCategoryId();
+			Category category = ApiClient.get("/categories/" + service.getCategoryId(), Category.class);
+			if (category != null) {
+				categoryName = category.getCategoryName();
+			}
 
 			// 2) Get or create cart from session
 			HttpSession session = request.getSession(true);

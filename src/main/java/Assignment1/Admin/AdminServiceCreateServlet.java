@@ -7,11 +7,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 
-import Assignment1.DBUtil;
+import Assignment1.Service.Service;
+import Assignment1.api.ApiClient;
 
+/**
+ * Admin servlet for creating a new service via API.
+ * URL: /admin/services/create
+ */
 @WebServlet("/admin/services/create")
 public class AdminServiceCreateServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -24,8 +27,6 @@ public class AdminServiceCreateServlet extends HttpServlet {
 			throws ServletException, IOException {
 
 		try {
-			Connection conn = DBUtil.getConnection();
-
 			int categoryId = Integer.parseInt(request.getParameter("category_id"));
 			String name = request.getParameter("service_name");
 			String description = request.getParameter("description");
@@ -33,25 +34,21 @@ public class AdminServiceCreateServlet extends HttpServlet {
 			int duration = Integer.parseInt(request.getParameter("duration_min"));
 			String imagePath = request.getParameter("image_path");
 
-			String sqlStr = "INSERT INTO service (category_id, service_name, description, price, duration_min, image_path) "
-					+ "VALUES (?, ?, ?, ?, ?, ?)";
+			// Build service object
+			Service service = new Service(0, categoryId, name, description, price, duration, imagePath);
 
-			PreparedStatement pstmt = conn.prepareStatement(sqlStr);
-			pstmt.setInt(1, categoryId);
-			pstmt.setString(2, name);
-			pstmt.setString(3, description);
-			pstmt.setDouble(4, price);
-			pstmt.setInt(5, duration);
-			pstmt.setString(6, imagePath);
+			// POST to API
+			int status = ApiClient.post("/services", service);
 
-			pstmt.executeUpdate();
-			conn.close();
-
-			response.sendRedirect(request.getContextPath() + "/admin/services/list");
+			if (status == 200 || status == 201) {
+				response.sendRedirect(request.getContextPath() + "/admin/services/list");
+			} else {
+				response.sendRedirect(request.getContextPath() + "/admin/adminAddService.jsp?errCode=CreateFailed");
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			response.sendRedirect(request.getContextPath() + "/admin/adminAddService.jsp?errCode=" + e);
+			response.sendRedirect(request.getContextPath() + "/admin/adminAddService.jsp?errCode=API_ERROR");
 		}
 	}
 }

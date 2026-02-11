@@ -6,15 +6,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.ws.rs.core.GenericType;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 
+import Assignment1.api.ApiClient;
+
+/**
+ * Servlet for fetching country codes via API.
+ * URL: /countryCodeServlet
+ */
 @WebServlet("/countryCodeServlet")
-public class countryCodeServlet extends HttpServlet {
+public class CountryCodeServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -27,35 +31,25 @@ public class countryCodeServlet extends HttpServlet {
             errText = errCode;
         }
 
-        HttpSession session = request.getSession(true); // create session if not exists
+        HttpSession session = request.getSession(true);
 
-        try (Connection conn = DBUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement("SELECT * FROM country_code");
-             ResultSet rs = pstmt.executeQuery()) {
-
-            ArrayList<Country> countryList = new ArrayList<>();
-
-            while (rs.next()) {
-                Country c = new Country(
-                        rs.getInt("id"),
-                        rs.getInt("country_code"), // changed to int
-                        rs.getString("country_name"),
-                        rs.getString("iso2"),
-                        rs.getString("flag_image")
-                );
-                countryList.add(c);
-            }
+        try {
+            // Fetch countries from API
+            ArrayList<Country> countryList = ApiClient.getList(
+                "/countries",
+                new GenericType<ArrayList<Country>>() {}
+            );
 
             session.setAttribute("countryList", countryList);
 
-            // safe redirect: fallback if origin is null
+            // Safe redirect: fallback if origin is null
             String redirectPath = (origin != null && !origin.isBlank()) ? origin : "index.jsp";
             response.sendRedirect(request.getContextPath() + "/" + redirectPath + "?errCode=" + errText);
 
         } catch (Exception e) {
             e.printStackTrace();
             String redirectPath = (origin != null && !origin.isBlank()) ? origin : "index.jsp";
-            response.sendRedirect(request.getContextPath() + "/" + redirectPath + "?errCode=DBError");
+            response.sendRedirect(request.getContextPath() + "/" + redirectPath + "?errCode=APIError");
         }
     }
 

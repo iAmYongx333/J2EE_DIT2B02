@@ -8,12 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 
-import Assignment1.DBUtil;
+import Assignment1.api.ApiClient;
 
+/**
+ * Admin servlet for deleting feedback via API.
+ * URL: /admin/feedback/delete
+ */
 @WebServlet("/admin/feedback/delete")
 public class AdminFeedbackDeleteServlet extends HttpServlet {
 
@@ -25,7 +26,7 @@ public class AdminFeedbackDeleteServlet extends HttpServlet {
 
 		HttpSession session = request.getSession(false);
 
-		// ✅ Check admin session
+		// Check admin session
 		if (session == null || session.getAttribute("sessRole") == null
 				|| !"admin".equals(session.getAttribute("sessRole"))) {
 
@@ -44,31 +45,25 @@ public class AdminFeedbackDeleteServlet extends HttpServlet {
 		try {
 			int feedbackId = Integer.parseInt(idParam);
 
-			String sql = "DELETE FROM feedback WHERE feedback_id = ?";
+			// DELETE via API
+			int status = ApiClient.delete("/feedback/" + feedbackId);
 
-			try (Connection conn = DBUtil.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-				pstmt.setInt(1, feedbackId);
-				int rows = pstmt.executeUpdate();
-
-				if (rows > 0) {
-					session.setAttribute("flashMessage", "Feedback deleted successfully.");
-				} else {
-					session.setAttribute("flashMessage", "Feedback not found.");
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if (status == 200 || status == 204) {
+				session.setAttribute("flashMessage", "Feedback deleted successfully.");
+			} else {
+				session.setAttribute("flashMessage", "Failed to delete feedback.");
 			}
 
 		} catch (NumberFormatException e) {
 			session.setAttribute("flashMessage", "Invalid feedback ID.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			session.setAttribute("flashMessage", "API error occurred.");
 		}
 
 		response.sendRedirect(request.getContextPath() + "/admin/feedback/list");
 	}
 
-	// 🚫 Optional: Prevent delete using GET
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
