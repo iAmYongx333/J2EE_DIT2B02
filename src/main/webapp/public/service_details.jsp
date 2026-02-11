@@ -165,7 +165,7 @@
                                         </p>
                                     </div>
                                     <p class="text-[11px] text-slate-500">
-                                        <fmt:formatDate value="${f.createdAt}" pattern="dd MMM yyyy, HH:mm" />
+                                        <fmt:formatDate value="${f.createdAtDate}" pattern="dd MMM yyyy, HH:mm" />
                                     </p>
                                 </div>
                                 <p class="mt-3 text-sm text-slate-700 leading-relaxed">${f.comments}</p>

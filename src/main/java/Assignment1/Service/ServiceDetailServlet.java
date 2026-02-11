@@ -105,6 +105,7 @@ public class ServiceDetailServlet extends HttpServlet {
             }
 
             UUID userId   = UUID.fromString(session.getAttribute("sessId").toString());
+            String userName   = session.getAttribute("sessId").toString();
             int serviceId = Integer.parseInt(request.getParameter("serviceId"));
             int rating    = Integer.parseInt(request.getParameter("rating"));
             String comments = request.getParameter("comments");
@@ -125,7 +126,8 @@ Feedback feedback = new Feedback(
     serviceId,
     rating,
     comments,
-    null
+    null,
+    userName
 );
 
 /* ---------- POST to API ---------- */

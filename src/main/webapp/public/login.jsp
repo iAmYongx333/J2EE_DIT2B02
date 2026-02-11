@@ -9,15 +9,30 @@
 <%
 String errText = "";
 String errCode = request.getParameter("errCode");
+
 if (errCode != null) {
-	errText = errCode;
+    switch(errCode){
+        case "invalidLogin":
+            errText = "Invalid email or password.";
+            break;
+        case "NoSession":
+            errText = "Please log in first.";
+            break;
+        case "UserNotFound":
+            errText = "Account not found.";
+            break;
+        default:
+            errText = "Login failed. Please try again.";
+    }
 }
 
-Object userRole = session.getAttribute("sessRole");
-if (userRole != null) {
-	response.sendRedirect(request.getContextPath() + "/index.jsp");
-	return;
+
+HttpSession loginSession = request.getSession(false);
+if (loginSession != null && loginSession.getAttribute("sessRole") != null) {
+    response.sendRedirect(request.getContextPath() + "/index.jsp");
+    return;
 }
+
 %>
 
 <!-- Tailwind (remove if you already load this globally) -->
@@ -125,9 +140,10 @@ translateY(
 						</header>
 
 						<!-- Form -->
-						<form method="get"
-							action="<%=request.getContextPath()%>/customersServlet"
-							class="space-y-4">
+						<form method="post"
+    						action="<%=request.getContextPath()%>/customersServlet"
+   							class="space-y-4">
+
 							<input type="hidden" name="action" value="login">
 
 							<!-- Email -->

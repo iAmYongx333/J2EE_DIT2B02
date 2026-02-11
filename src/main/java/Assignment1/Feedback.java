@@ -1,5 +1,11 @@
 package Assignment1;
 
+    import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+
 public class Feedback {
 
     private int feedbackId;
@@ -10,6 +16,7 @@ public class Feedback {
     private String createdAt;   // ✅ changed from Timestamp → String
 	private String userName;
 
+    
     public Feedback() {} // ✅ REQUIRED for JSON-B
 
     public Feedback(int feedbackId, String userId, int serviceId, int rating,
@@ -43,4 +50,25 @@ public class Feedback {
 
 	public String getUserName() { return userName; }
 	public void setUserName(String userName) { this.userName = userName; }
+
+
+
+public Date getCreatedAtDate() {
+    if (createdAt == null) return null;
+
+    try {
+        // Handles: 2025-12-04 05:02:55.696782
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+        LocalDateTime ldt = LocalDateTime.parse(createdAt, formatter);
+        return Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+    } catch (Exception e) {
+        try {
+            // Handles ISO: 2025-12-03T21:02:55.696Z
+            return Date.from(Instant.parse(createdAt));
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+}
+
 }
