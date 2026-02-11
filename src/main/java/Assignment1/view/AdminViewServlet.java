@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(urlPatterns = {"/admin", "/admin/services", "/admin/customers", "/admin/feedback"})
+@WebServlet(urlPatterns = {"/admin", "/admin/services", "/admin/customers"})
 public class AdminViewServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -33,9 +33,6 @@ public class AdminViewServlet extends HttpServlet {
 				break;
 			case "/admin/customers":
 				jspPath = "/admin/manage_customers.jsp";
-				break;
-			case "/admin/feedback":
-				jspPath = "/admin/manage_feedback.jsp";
 				break;
 			default:
 				jspPath = "/admin/admin_dashboard.jsp";
