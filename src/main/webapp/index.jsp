@@ -151,9 +151,10 @@
   window.addEventListener('load', revealOnScroll);
 
   // Fetch services from Spring Boot backend
-  // Use relative URL or same-origin API proxy for production
-  const API_BASE_URL = window.location.origin;
+  const API_BASE_URL = 'http://localhost:8081/api';
   const ctx = '<%=request.getContextPath()%>';
+  
+  console.log('API_BASE_URL:', API_BASE_URL);  // Debug log
 
   // Utility function to escape HTML and prevent XSS
   function escapeHtml(text) {
@@ -175,18 +176,22 @@
 
   async function loadServices() {
     const container = document.getElementById('services-container');
+    const fetchUrl = API_BASE_URL + '/services';
+    console.log('Fetching services from:', fetchUrl);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/services`, {
+      const response = await fetch(fetchUrl, {
         method: 'GET',
+        mode: 'cors',
         headers: {
           'Accept': 'application/json'
-        },
-        credentials: 'same-origin' // Include cookies for same-origin requests
+        }
       });
       
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch services');
+        throw new Error('Failed to fetch services: ' + response.status);
       }
       
       const services = await response.json();
@@ -211,22 +216,13 @@
         const serviceName = escapeHtml(service.serviceName || service.service_name || 'Service');
         const description = escapeHtml(service.description || '');
         
-        return `
-          <div class="group bg-white rounded-3xl shadow-sm border border-[#e9e5df]
-                      hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
-            <img src="${imgSrc}"
-                 class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
-                 onerror="this.src='${ctx}/images/default-service.png'">
-            <div class="p-8 text-left">
-              <h3 class="text-xl sm:text-2xl font-serif font-semibold text-[#1e2a38] mb-3">
-                ${serviceName}
-              </h3>
-              <p class="text-slate-600 text-sm leading-relaxed">
-                ${description}
-              </p>
-            </div>
-          </div>
-        `;
+        return '<div class="group bg-white rounded-3xl shadow-sm border border-[#e9e5df] hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">' +
+            '<img src="' + imgSrc + '" class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src=\'' + ctx + '/images/default-service.png\'">' +
+            '<div class="p-8 text-left">' +
+              '<h3 class="text-xl sm:text-2xl font-serif font-semibold text-[#1e2a38] mb-3">' + serviceName + '</h3>' +
+              '<p class="text-slate-600 text-sm leading-relaxed">' + description + '</p>' +
+            '</div>' +
+          '</div>';
       }).join('');
       
     } catch (error) {
