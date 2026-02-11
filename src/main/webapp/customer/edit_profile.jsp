@@ -7,10 +7,16 @@
     <meta charset="UTF-8">
     <title>Edit Profile – SilverCare</title>
 
-    <% String errText="" ; String errCode=request.getParameter("errCode"); if (errCode !=null) { errText=errCode; } //
-      Password messages from servlet String pwdError=request.getParameter("error"); String
-      pwdSuccess=request.getParameter("success"); Customer u=(Customer) session.getAttribute("user"); ArrayList<Country>
-      countryList = (ArrayList<Country>) session.getAttribute("countryList");
+    <% String errText="" ; 
+    String errCode=request.getParameter("errCode"); 
+    if (errCode !=null) { errText=errCode; }
+    // Password messages from servlet String 
+    pwdError=request.getParameter("error"); 
+    String pwdSuccess=request.getParameter("success");
+    Customer u=(Customer) 
+    session.getAttribute("user"); 
+    ArrayList<Country>
+    countryList = (ArrayList<Country>) session.getAttribute("countryList");
 
         if (u == null) {
         response.sendRedirect(request.getContextPath() + "/customersServlet?action=retrieveUser");

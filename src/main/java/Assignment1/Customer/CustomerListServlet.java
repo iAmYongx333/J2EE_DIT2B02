@@ -21,11 +21,8 @@ public class CustomerListServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
-
-        if ("login".equals(action)) {
-            loginUser(request, response);
-        } 
-        else if ("retrieveUser".equals(action)) {
+        System.out.print(action);
+        if ("retrieveUser".equals(action)) {
             retrieveUser(request, response);
         } 
         else if ("logout".equals(action)) {
@@ -44,7 +41,10 @@ public class CustomerListServlet extends HttpServlet {
 
         String action = request.getParameter("action");
 
-        if ("create".equals(action)) {
+        if ("login".equals(action)) {
+            loginUser(request, response);
+        } 
+        else if ("create".equals(action)) {
             registerUser(request, response);
         } 
         else if ("update".equals(action)) {
@@ -64,7 +64,7 @@ public class CustomerListServlet extends HttpServlet {
 
     private void loginUser(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-
+    	System.out.println("loginUser has been called");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
@@ -73,14 +73,14 @@ public class CustomerListServlet extends HttpServlet {
         req.setPassword(password);
 
         Customer user = ApiClient.post("/customers/login", req, Customer.class);
-
         if (user != null) {
+            System.out.println("Login successful for user: " + user.getName());
             HttpSession session = request.getSession();
+            
             session.setAttribute("sessId", user.getUserId().toString());
-            session.setAttribute("sessName", user.getName());
             session.setAttribute("sessRole", user.getUserRole());
 
-            response.sendRedirect(request.getContextPath() + "/profile");
+            response.sendRedirect(request.getContextPath() + "/customersServlet?action=retrieveUser");
         } else {
             response.sendRedirect(request.getContextPath() + "/login?errCode=invalidLogin");
         }
@@ -115,25 +115,27 @@ public class CustomerListServlet extends HttpServlet {
     }
 
     private void retrieveUser(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+        throws IOException {
 
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("sessId") == null) {
-            response.sendRedirect(request.getContextPath() + "/login?errCode=NoSession");
-            return;
-        }
+    HttpSession session = request.getSession(false);
 
-        UUID userId = UUID.fromString(session.getAttribute("sessId").toString());
-
-        Customer user = ApiClient.get("/customers/" + userId, Customer.class);
-
-        if (user != null) {
-            session.setAttribute("user", user);
-            response.sendRedirect(request.getContextPath() + "/profile");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/login?errCode=UserNotFound");
-        }
+    if (session == null || session.getAttribute("sessId") == null) {
+        response.sendRedirect(request.getContextPath() + "/login?errCode=NoSession");
+        return;
     }
+
+    UUID userId = UUID.fromString(session.getAttribute("sessId").toString());
+
+    Customer user = ApiClient.get("/customers/" + userId, Customer.class);
+
+    if (user != null) {
+        session.setAttribute("user", user);
+        System.out.println(".() User Country retrieved: " + user.getCountryName());
+        response.sendRedirect(request.getContextPath() + "/profile");
+    } else {
+        response.sendRedirect(request.getContextPath() + "/login?errCode=UserNotFound");
+    }
+}
 
     private void updateUser(HttpServletRequest request, HttpServletResponse response)
             throws IOException {

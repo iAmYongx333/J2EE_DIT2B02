@@ -10,8 +10,8 @@ public class Customer {
     private String password;
     private String phone;
     private String userRole;
-
     private int countryId;
+    private String countryName;
     private String street;
     private String postalCode;
     private String block;
@@ -43,6 +43,9 @@ public class Customer {
 
     public int getCountryId() { return countryId; }
     public void setCountryId(int countryId) { this.countryId = countryId; }
+    
+    public String getCountryName() { return countryName; }
+    public void setCountryName(String countryName) { this.countryName = countryName; }
 
     public String getStreet() { return street; }
     public void setStreet(String street) { this.street = street; }

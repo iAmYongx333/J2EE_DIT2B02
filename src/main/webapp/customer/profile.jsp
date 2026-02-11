@@ -14,9 +14,11 @@
         }
         Customer u = (Customer) session.getAttribute("user");
         if (u == null) {
-            response.sendRedirect(request.getContextPath() + "/customersServlet?action=retrieveUser");
+            response.sendRedirect(request.getContextPath() + "/login?errCode=SessionExpired");
             return;
         }
+        System.out.println("User country ID: " + u.getCountryId());
+
         ArrayList<Country> countryList = (ArrayList<Country>) session.getAttribute("countryList");
         if (countryList == null) {
             response.sendRedirect(request.getContextPath() + "/countryCodeServlet?origin=profile");
@@ -84,7 +86,7 @@
             <!-- Top: name + edit button -->
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                 <div>
-                    <h2 class="font-serif text-xl md:text-2xl font-medium text-ink"><%= u.getFullName() %></h2>
+                    <h2 class="font-serif text-xl md:text-2xl font-medium text-ink"><%= u.getName() %></h2>
                 </div>
 
                 <a href="<%=request.getContextPath()%>/profile/edit"
@@ -112,9 +114,9 @@
                         <p class="text-sm text-ink flex items-center gap-2">
                             <% if (userFlagImage != null) { %>
                                 <img src="<%=request.getContextPath()%>/images/flags/<%= userFlagImage %>"
-                                     alt="<%= u.getCountry() %>" class="w-5 h-auto">
+                                     alt="<%= u.getCountryId() %>" class="w-5 h-auto">
                             <% } %>
-                            <span><%= u.getCountry() %></span>
+                            <span><%= u.getCountryName() %></span>
                         </p>
                     </div>
                 </div>
@@ -135,8 +137,8 @@
                             <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Block / unit</div>
                             <p class="text-sm text-ink">
                                 <%
-                                    String block = u.getBlockNo() != null ? u.getBlockNo() : "";
-                                    String unit = u.getUnitNo() != null ? u.getUnitNo() : "";
+                                    String block = u.getBlock() != null ? u.getBlock() : "";
+                                    String unit = u.getUnitNumber() != null ? u.getUnitNumber() : "";
                                 %>
                                 <%= block %><%= (!block.isEmpty() && !unit.isEmpty()) ? ", " : "" %><%= unit %>
                             </p>
