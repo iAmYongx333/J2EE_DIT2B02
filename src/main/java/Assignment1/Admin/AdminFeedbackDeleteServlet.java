@@ -38,7 +38,7 @@ public class AdminFeedbackDeleteServlet extends HttpServlet {
 
 		if (idParam == null || idParam.trim().isEmpty()) {
 			session.setAttribute("flashMessage", "Missing feedback ID.");
-			response.sendRedirect(request.getContextPath() + "/admin/feedback/list");
+			response.sendRedirect(request.getContextPath() + "/admin/feedback");
 			return;
 		}
 
@@ -46,7 +46,7 @@ public class AdminFeedbackDeleteServlet extends HttpServlet {
 			int feedbackId = Integer.parseInt(idParam);
 
 			// DELETE via API
-			int status = ApiClient.delete("/feedback/" + feedbackId);
+			int status = ApiClient.delete("/admin/feedback/" + feedbackId);
 
 			if (status == 200 || status == 204) {
 				session.setAttribute("flashMessage", "Feedback deleted successfully.");
@@ -61,12 +61,12 @@ public class AdminFeedbackDeleteServlet extends HttpServlet {
 			session.setAttribute("flashMessage", "API error occurred.");
 		}
 
-		response.sendRedirect(request.getContextPath() + "/admin/feedback/list");
+		response.sendRedirect(request.getContextPath() + "/admin/feedback");
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.sendRedirect(request.getContextPath() + "/admin/feedback/list");
+		response.sendRedirect(request.getContextPath() + "/admin/feedback");
 	}
 }

@@ -1,406 +1,408 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-	<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-		<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
-			<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 
-				<!DOCTYPE html>
-				<html lang="en">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Customers – SilverCare</title>
 
-				<head>
-					<meta charset="UTF-8" />
-					<title>Manage Customers | SilverCare Admin</title>
+    <%
+        Object userRole = session.getAttribute("sessRole");
+        if (userRole == null) {
+            response.sendRedirect(request.getContextPath() + "/login?errCode=NoSession");
+            return;
+        }
+        String userRoleString = userRole.toString();
+        if (!"admin".equals(userRoleString)) {
+            response.sendRedirect(request.getContextPath() + "/");
+            return;
+        }
+    %>
 
-					<% Object userRole=session.getAttribute("sessRole"); if (userRole==null) {
-						response.sendRedirect(request.getContextPath() + "/login?errCode=NoSession" );
-						return; } else { String userRoleString=userRole.toString(); if (!"admin".equals(userRoleString))
-						{ response.sendRedirect(request.getContextPath() + "/" ); return; } } %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    serif: ['Cormorant', 'Georgia', 'serif'],
+                    sans: ['Outfit', 'system-ui', 'sans-serif'],
+                },
+                colors: {
+                    stone: { warm: '#f5f3ef', mid: '#e8e4dc', deep: '#d4cec3' },
+                    ink: { DEFAULT: '#2c2c2c', light: '#5a5a5a', muted: '#8a8a8a' },
+                    copper: { DEFAULT: '#b87a4b', light: '#d4a574' },
+                }
+            }
+        }
+    }
+    </script>
+    <style>
+    html { scroll-behavior: smooth; }
+    body { -webkit-font-smoothing: antialiased; }
 
-						<!-- Tailwind via CDN -->
-						<script src="https://cdn.tailwindcss.com"></script>
+    .loader {
+        position: fixed; inset: 0; background: #f5f3ef;
+        display: flex; align-items: center; justify-content: center;
+        z-index: 9999; transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .loader.hidden { opacity: 0; visibility: hidden; }
+    .loader-bar {
+        width: 120px; height: 2px; background: #e8e4dc; overflow: hidden;
+    }
+    .loader-bar::after {
+        content: ''; display: block; width: 40%; height: 100%;
+        background: #2c2c2c; animation: loadingBar 1s ease-in-out infinite;
+    }
+    @keyframes loadingBar {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(350%); }
+    }
 
-						<style>
-							html,
-							body {
-								height: 100%;
-							}
+    .page-content { opacity: 0; transition: opacity 0.6s ease; }
+    .page-content.visible { opacity: 1; }
 
-							body {
-								font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-							}
+    .stagger-1 { animation: fadeSlideIn 0.6s ease 0.1s both; }
+    .stagger-2 { animation: fadeSlideIn 0.6s ease 0.2s both; }
+    .stagger-3 { animation: fadeSlideIn 0.6s ease 0.3s both; }
+    .stagger-4 { animation: fadeSlideIn 0.6s ease 0.4s both; }
 
-							.table-card {
-								transition:
-									box-shadow 0.25s ease,
-									border-color 0.22s ease,
-									background-color 0.22s ease,
-									transform 0.2s ease;
-							}
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-							.table-card:hover {
-								box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
-								border-color: rgba(148, 163, 184, 0.7);
-							}
+    .table-row-hover { transition: background-color 0.15s ease; }
+    .table-row-hover:hover { background-color: #f5f3ef; }
+    .text-mono { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
 
-							.pill {
-								font-size: 11px;
-								padding: 0.25rem 0.6rem;
-								border-radius: 999px;
-							}
+<body class="bg-stone-warm text-ink font-sans font-light min-h-screen">
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="text-center">
+            <p class="font-serif text-2xl text-ink mb-6">SilverCare</p>
+            <div class="loader-bar"></div>
+        </div>
+    </div>
 
-							.text-mono {
-								font-variant-numeric: tabular-nums;
-							}
-						</style>
-				</head>
+    <div class="page-content" id="pageContent">
+    <%@ include file="../includes/header.jsp" %>
 
-				<body class="bg-[#f7f4ef] text-slate-900">
-					<%@ include file="../includes/header.jsp" %>
+    <main class="pt-24 pb-20 px-5 md:px-12">
+        <div class="max-w-7xl mx-auto">
 
-						<main class="mt-12 min-h-screen pt-24 pb-16 px-6 sm:px-10 lg:px-16">
-							<div class="max-w-6xl xl:max-w-7xl mx-auto space-y-10">
+            <!-- Page Header -->
+            <header class="mb-10">
+                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                    <div>
+                        <span class="text-copper text-xs uppercase tracking-[0.2em] stagger-1">Administration</span>
+                        <h1 class="font-serif text-4xl md:text-5xl font-medium text-ink leading-tight mt-3 mb-4 stagger-2">
+                            Manage Customers
+                        </h1>
+                        <p class="text-ink-light text-base max-w-xl leading-relaxed stagger-3">
+                            View registered customers, review contact details, and manage accounts.
+                        </p>
+                    </div>
 
-								<!-- HEADER -->
-								<section class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-									<div class="space-y-2">
-										<h1 class="text-3xl sm:text-4xl font-semibold tracking-tight">
-											Manage Customers
-										</h1>
-										<p class="max-w-xl text-sm sm:text-base text-slate-700">
-											View registered customers, check their contact details, and remove accounts
-											if needed.
-										</p>
-									</div>
+                    <div class="stagger-3 flex items-center gap-4">
+                        <a href="${pageContext.request.contextPath}/admin/dashboard"
+                           class="text-xs text-ink-muted hover:text-ink transition-colors inline-flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </div>
+                </div>
+            </header>
 
-									<div class="flex items-center gap-3">
-										<a href="${pageContext.request.contextPath}/admin/dashboard"
-											class="text-xs sm:text-sm text-slate-600 hover:text-slate-800 underline">
-											← Back to dashboard
-										</a>
-									</div>
-								</section>
+            <!-- Table Card -->
+            <section class="stagger-3">
+                <div class="bg-white border border-stone-mid">
 
-								<!-- TABLE WRAPPER -->
-								<section
-									class="table-card bg-white/90 border border-slate-200  shadow-sm overflow-hidden">
-									<!-- Toolbar -->
-									<div
-										class="px-4 sm:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-										<div>
-											<p class="text-xs uppercase tracking-wide text-slate-500 font-medium">
-												Customers</p>
-											<p class="text-xs text-slate-500 mt-1">
-												<c:choose>
-													<c:when test="${not empty customers}">
-														<c:out value="${fn:length(customers)}" /> customers loaded.
-													</c:when>
-													<c:otherwise>No customers found.</c:otherwise>
-												</c:choose>
-											</p>
-										</div>
-										<div class="flex items-center gap-2">
-											<input type="text" id="customerSearch"
-												placeholder="Search by name or email..."
-												class="w-full sm:w-64 px-3 py-2  border border-slate-200 text-xs sm:text-sm bg-[#f9f7f3] focus:outline-none focus:ring-2 focus:ring-slate-400/50 focus:border-slate-400" />
-										</div>
-									</div>
+                    <!-- Toolbar -->
+                    <div class="px-6 py-5 border-b border-stone-mid flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h2 class="font-serif text-lg font-medium text-ink">Customer Directory</h2>
+                            <p class="text-xs text-ink-muted mt-1">
+                                <c:choose>
+                                    <c:when test="${not empty customers}">
+                                        ${fn:length(customers)} customer<c:if test="${fn:length(customers) != 1}">s</c:if> registered
+                                    </c:when>
+                                    <c:otherwise>No customers found</c:otherwise>
+                                </c:choose>
+                            </p>
+                        </div>
+                        <div>
+                            <input type="text" id="customerSearch" placeholder="Search by name or email..."
+                                   class="w-full sm:w-64 px-4 py-2.5 border border-stone-mid text-sm bg-stone-warm text-ink placeholder:text-ink-muted focus:outline-none focus:border-ink transition-colors" />
+                        </div>
+                    </div>
 
-									<!-- TABLE (desktop) -->
-									<div class="hidden md:block overflow-x-auto">
-										<table class="min-w-full table-fixed text-sm">
-											<thead
-												class="bg-[#f9f7f3] border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-												<tr>
-													<!-- CUSTOMER -->
-													<th class="w-[26%] px-6 py-3 text-left">
-														CUSTOMER
-													</th>
+                    <!-- Desktop Table -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-stone-warm border-b border-stone-mid">
+                                <tr class="text-xs uppercase tracking-[0.15em] text-ink-muted">
+                                    <th class="text-left px-6 py-3 font-medium">Customer</th>
+                                    <th class="text-left px-6 py-3 font-medium">Email</th>
+                                    <th class="text-left px-4 py-3 font-medium">Phone</th>
+                                    <th class="text-left px-4 py-3 font-medium">Country</th>
+                                    <th class="text-left px-4 py-3 font-medium">Joined</th>
+                                    <th class="text-right px-6 py-3 font-medium">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-stone-mid text-sm">
+                                <c:forEach var="cust" items="${customers}">
+                                    <tr class="table-row-hover customer-row"
+                                        data-name="${fn:toLowerCase(cust.name)}"
+                                        data-email="${fn:toLowerCase(cust.email)}">
+                                        <td class="px-6 py-4 align-middle">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-9 h-9 bg-stone-mid flex items-center justify-center flex-shrink-0">
+                                                    <span class="font-serif text-sm text-ink">
+                                                        ${fn:substring(cust.name, 0, 1)}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <p class="font-medium text-ink text-sm">${cust.name}</p>
+                                                    <p class="text-[11px] text-ink-muted">ID: ${cust.userId}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 align-middle">
+                                            <span class="text-ink-light text-sm">${cust.email}</span>
+                                        </td>
+                                        <td class="px-4 py-4 align-middle">
+                                            <span class="text-ink-light text-sm text-mono">${cust.phone}</span>
+                                        </td>
+                                        <td class="px-4 py-4 align-middle">
+                                            <c:choose>
+                                                <c:when test="${not empty cust.countryName}">
+                                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-stone-warm border border-stone-mid">
+                                                        <c:if test="${not empty cust.flagImage}">
+                                                            <img src="${pageContext.request.contextPath}/images/flags/${cust.flagImage}"
+                                                                 alt="${cust.countryName}" class="w-4 h-3 object-cover" />
+                                                        </c:if>
+                                                        <span class="text-xs text-ink">${cust.countryName}</span>
+                                                    </div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-xs text-ink-muted">Unknown</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td class="px-4 py-4 align-middle">
+                                            <time data-iso="${cust.createdAt}" class="text-xs text-ink-muted text-mono">${cust.createdAt}</time>
+                                        </td>
+                                        <td class="px-6 py-4 align-middle text-right">
+                                            <button type="button"
+                                                    class="open-delete-modal text-xs px-3 py-1.5 border border-stone-mid text-ink-muted hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
+                                                    data-id="${cust.userId}" data-name="${cust.name}" data-email="${cust.email}">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
 
-													<!-- EMAIL -->
-													<th class="w-[26%] px-6 py-3 text-left">
-														EMAIL
-													</th>
+                                <c:if test="${empty customers}">
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-12 text-center">
+                                            <svg class="w-10 h-10 text-stone-deep mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            </svg>
+                                            <p class="text-sm text-ink-muted">No customers yet</p>
+                                            <p class="text-xs text-ink-muted mt-1">Accounts will appear here after registration</p>
+                                        </td>
+                                    </tr>
+                                </c:if>
+                            </tbody>
+                        </table>
+                    </div>
 
-													<!-- PHONE -->
-													<th class="w-[14%] px-6 py-3 text-left">
-														PHONE
-													</th>
+                    <!-- Mobile Cards -->
+                    <div class="md:hidden divide-y divide-stone-mid" id="customersCards">
+                        <c:forEach items="${customers}" var="cust">
+                            <div class="customer-row px-5 py-4 space-y-3"
+                                 data-name="${fn:toLowerCase(cust.name)}"
+                                 data-email="${fn:toLowerCase(cust.email)}">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 bg-stone-mid flex items-center justify-center flex-shrink-0">
+                                            <span class="font-serif text-sm text-ink">${fn:substring(cust.name, 0, 1)}</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-sm text-ink">${cust.name}</p>
+                                            <p class="text-[11px] text-ink-muted">${cust.email}</p>
+                                        </div>
+                                    </div>
+                                    <c:if test="${not empty cust.countryName}">
+                                        <div class="inline-flex items-center gap-1.5 px-2 py-1 bg-stone-warm border border-stone-mid">
+                                            <c:if test="${not empty cust.flagImage}">
+                                                <img src="${pageContext.request.contextPath}/images/flags/${cust.flagImage}"
+                                                     alt="${cust.countryName}" class="w-4 h-3 object-cover" />
+                                            </c:if>
+                                            <span class="text-[11px] text-ink">${cust.countryName}</span>
+                                        </div>
+                                    </c:if>
+                                </div>
+                                <div class="flex items-center justify-between text-xs text-ink-muted">
+                                    <span class="text-mono">${cust.phone}</span>
+                                    <time data-iso="${cust.createdAt}" class="text-mono">${cust.createdAt}</time>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="button"
+                                            class="open-delete-modal text-[11px] px-3 py-1.5 border border-stone-mid text-ink-muted hover:text-red-600 hover:border-red-200 transition-colors"
+                                            data-id="${cust.userId}" data-name="${cust.name}" data-email="${cust.email}">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </c:forEach>
 
-													<!-- COUNTRY -->
-													<th class="w-[14%] px-6 py-3 text-left">
-														COUNTRY
-													</th>
+                        <c:if test="${empty customers}">
+                            <div class="px-5 py-12 text-center">
+                                <p class="text-sm text-ink-muted">No customers yet</p>
+                            </div>
+                        </c:if>
+                    </div>
 
-													<!-- JOINED -->
-													<th class="w-[14%] px-6 py-3 text-left">
-														JOINED
-													</th>
+                </div>
+            </section>
 
-													<!-- ACTIONS -->
-													<th class="w-[6%] px-6 py-3 text-right">
-														ACTIONS
-													</th>
-												</tr>
-											</thead>
+        </div>
+    </main>
 
-											<tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
-												<c:forEach var="cust" items="${customers}">
-													<tr class="hover:bg-[#faf7f2]">
-														<!-- CUSTOMER -->
-														<td class="w-[26%] px-6 py-4 align-middle text-left">
-															<div class="flex flex-col">
-																<span
-																	class="font-medium text-slate-900">${cust.name}</span>
-																<span class="text-[11px] text-slate-500 break-all">
-																	ID: ${cust.user_id}
-																</span>
-															</div>
-														</td>
+    <%@ include file="../includes/footer.jsp" %>
+    </div>
 
-														<!-- EMAIL -->
-														<td class="w-[26%] px-6 py-4 align-middle text-left">
-															<span class="text-slate-800 break-all">${cust.email}</span>
-														</td>
+    <!-- Delete Modal -->
+    <div id="deleteModalBackdrop"
+         class="fixed inset-0 z-[220] bg-black/20 backdrop-blur-sm flex items-center justify-center opacity-0 invisible transition-opacity duration-200">
+        <div id="deleteModal"
+             class="w-full max-w-md mx-4 bg-white border border-stone-mid shadow-lg px-7 py-7 transform translate-y-4 transition-all duration-250 ease-out">
 
-														<!-- PHONE -->
-														<td class="w-[14%] px-6 py-4 align-middle text-left">
-															<span class="text-slate-800">${cust.phone}</span>
-														</td>
+            <h2 class="font-serif text-xl font-medium text-ink">Delete Customer</h2>
+            <p class="mt-3 text-sm text-ink-light leading-relaxed">
+                This action will permanently remove this customer account from SilverCare.
+                Bookings tied to this account may also be affected. This cannot be undone.
+            </p>
 
-														<!-- COUNTRY -->
-														<td class="w-[14%] px-6 py-4 align-middle text-left">
-															<c:choose>
-																<c:when test="${not empty cust.countryName}">
-																	<div
-																		class="inline-flex items-center gap-2 px-3 py-1.5  bg-slate-50 border border-slate-200">
-																		<c:if test="${not empty cust.flagImage}">
-																			<img src="${pageContext.request.contextPath}/images/flags/${cust.flagImage}"
-																				alt="${cust.countryName}"
-																				class="w-5 h-5  object-cover" />
-																		</c:if>
-																		<span
-																			class="text-xs text-slate-700">${cust.countryName}</span>
-																	</div>
-																</c:when>
-																<c:otherwise>
-																	<span class="text-xs text-slate-400">Unknown</span>
-																</c:otherwise>
-															</c:choose>
-														</td>
+            <div class="mt-5 border border-stone-mid bg-stone-warm px-5 py-4">
+                <p class="text-sm font-medium text-ink" id="deleteCustomerName">Customer name</p>
+                <p class="text-xs text-ink-muted mt-1 break-all" id="deleteCustomerEmail">customer@example.com</p>
+                <p class="text-[11px] text-ink-muted mt-1" id="deleteCustomerId">ID: —</p>
+            </div>
 
-														<!-- JOINED -->
-														<td class="w-[14%] px-6 py-4 align-middle text-left">
-															<span class="text-xs sm:text-sm text-slate-800">
-																<fmt:formatDate value="${cust.created_at}"
-																	pattern="dd MMM yyyy, HH:mm" />
-															</span>
-														</td>
+            <form id="deleteCustomerForm" method="post"
+                  action="${pageContext.request.contextPath}/admin/customers/delete"
+                  class="mt-6 flex items-center justify-end gap-3">
+                <input type="hidden" name="user_id" id="deleteUserId" />
 
-														<!-- ACTIONS -->
-														<td class="w-[6%] px-6 py-4 align-middle text-right">
-															<button type="button"
-																class="open-delete-modal text-xs px-3 py-1.5  border border-red-200 text-red-600 bg-white hover:bg-red-50"
-																data-id="${cust.user_id}" data-name="${cust.name}"
-																data-email="${cust.email}">
-																Delete
-															</button>
-														</td>
-													</tr>
-												</c:forEach>
-											</tbody>
-										</table>
-									</div>
+                <button type="button" id="cancelDeleteBtn"
+                        class="px-4 py-2 border border-stone-mid text-sm text-ink bg-white hover:bg-stone-warm transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors">
+                    Delete customer
+                </button>
+            </form>
+        </div>
+    </div>
 
-									<!-- CARDS (mobile) -->
-									<div class="md:hidden divide-y divide-slate-100" id="customersCards">
-										<c:forEach items="${customers}" var="cust">
-											<div class="customer-row px-4 py-4 space-y-2"
-												data-name="${fn:toLowerCase(cust.name)}"
-												data-email="${fn:toLowerCase(cust.email)}">
-												<div class="flex items-center justify-between">
-													<div>
-														<p class="font-medium text-sm">${cust.name}</p>
-														<p class="text-[11px] text-slate-500 break-all">${cust.email}
-														</p>
-													</div>
-													<span class="pill bg-slate-100 text-slate-700 text-mono">
-														<c:choose>
-															<c:when test="${not empty cust.countryName}">
-																<c:if test="${not empty cust.flagImage}">
-																	<img src="${pageContext.request.contextPath}/images/flags/${cust.flagImage}"
-																		alt="${cust.countryName}"
-																		class="w-4 h-4  object-cover" />
-																</c:if>
-																<span>${cust.countryName}</span>
-															</c:when>
-															<c:otherwise>
-																<span class="text-slate-400">Country unknown</span>
-															</c:otherwise>
-														</c:choose>
-													</span>
-												</div>
-												<div class="flex items-center justify-between text-xs text-slate-600">
-													<span>${cust.phone}</span>
-													<span class="text-mono">${cust.created_at}</span>
-												</div>
-												<div class="flex justify-end pt-2">
-													<button type="button"
-														class="open-delete-modal text-[11px] px-2.5 py-1.5  border border-red-200 text-red-600 bg-white hover:bg-red-50"
-														data-id="${cust.user_id}" data-name="${cust.name}"
-														data-email="${cust.email}">
-														Delete
-													</button>
-												</div>
-											</div>
-										</c:forEach>
+    <script>
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('pageContent').classList.add('visible');
+        }, 400);
+    });
 
-										<c:if test="${empty customers}">
-											<div class="px-4 py-5 text-center text-sm text-slate-500">
-												No customers yet. New accounts will appear here after registration.
-											</div>
-										</c:if>
-									</div>
-								</section>
-							</div>
-						</main>
+    // Format ISO date strings
+    document.querySelectorAll('time[data-iso]').forEach(function(el) {
+        var iso = el.getAttribute('data-iso');
+        if (!iso) return;
+        try {
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return;
+            var now = new Date();
+            var diff = now - d;
+            var days = Math.floor(diff / 86400000);
+            if (days < 1) { el.textContent = 'Today'; }
+            else if (days < 2) { el.textContent = 'Yesterday'; }
+            else if (days < 7) { el.textContent = days + ' days ago'; }
+            else {
+                el.textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+            }
+            el.title = d.toLocaleString();
+        } catch(e) {}
+    });
 
-						<!-- DELETE CUSTOMER MODAL -->
-						<div id="deleteModalBackdrop" class="fixed inset-0 z-[220] bg-black/30 backdrop-blur-sm
-	            flex items-center justify-center
-	            opacity-0 invisible transition-opacity duration-200">
-							<div id="deleteModal" class="w-full max-w-md mx-4  bg-[#fdfaf5]
-	              border border-[#ecd9d6]
-	              shadow-[0_18px_50px_rgba(15,23,42,0.30)]
-	              px-6 py-6 sm:px-7 sm:py-7
-	              transform translate-y-4
-	              transition-all duration-250 ease-out">
+    document.addEventListener("DOMContentLoaded", () => {
+        // Search
+        const input = document.getElementById("customerSearch");
+        if (input) {
+            const rows = Array.from(document.querySelectorAll(".customer-row"));
+            input.addEventListener("input", () => {
+                const q = input.value.toLowerCase();
+                rows.forEach(row => {
+                    const name = row.dataset.name || "";
+                    const email = row.dataset.email || "";
+                    row.style.display = (name.includes(q) || email.includes(q)) ? "" : "none";
+                });
+            });
+        }
 
-								<h2 class="text-lg font-semibold text-[#1e2a38] tracking-tight">
-									Delete customer
-								</h2>
-								<p class="mt-2 text-[13px] text-slate-600">
-									This action will permanently remove this customer account from SilverCare.
-									Bookings tied to this account may also be affected depending on how your
-									database is configured. This cannot be undone.
-								</p>
+        // Delete Modal
+        const backdrop = document.getElementById("deleteModalBackdrop");
+        const modal = document.getElementById("deleteModal");
+        const nameSpan = document.getElementById("deleteCustomerName");
+        const emailSpan = document.getElementById("deleteCustomerEmail");
+        const idSpan = document.getElementById("deleteCustomerId");
+        const userIdInput = document.getElementById("deleteUserId");
+        const cancelBtn = document.getElementById("cancelDeleteBtn");
 
-								<!-- Customer summary -->
-								<div class="mt-4  border border-[#e5d5d2] bg-white px-4 py-3">
-									<p class="text-[13px] font-medium text-[#1e2a38]" id="deleteCustomerName">
-										Customer name
-									</p>
-									<p class="text-[12px] text-slate-600 mt-1 break-all" id="deleteCustomerEmail">
-										customer@example.com
-									</p>
-									<p class="text-[11px] text-slate-500 mt-1" id="deleteCustomerId">
-										ID: —
-									</p>
-								</div>
+        function openDeleteModal(userId, name, email) {
+            nameSpan.textContent = name || "Unknown customer";
+            emailSpan.textContent = email || "No email";
+            idSpan.textContent = "ID: " + (userId || "\u2014");
+            userIdInput.value = userId || "";
 
-								<!-- Form that actually deletes -->
-								<form id="deleteCustomerForm" method="post"
-									action="${pageContext.request.contextPath}/admin/customers/delete"
-									class="mt-6 flex items-center justify-end gap-3 text-xs sm:text-sm">
-									<input type="hidden" name="user_id" id="deleteUserId" />
+            backdrop.classList.remove("invisible");
+            backdrop.style.opacity = "0";
+            requestAnimationFrame(() => {
+                backdrop.style.opacity = "1";
+                modal.style.transform = "translateY(0)";
+            });
+        }
 
-									<button type="button" id="cancelDeleteBtn" class="px-3 py-2  border border-slate-200
-	                     text-slate-700 bg-white hover:bg-slate-50
-	                     transition-colors duration-150">
-										Cancel
-									</button>
+        function closeDeleteModal() {
+            backdrop.style.opacity = "0";
+            modal.style.transform = "translateY(16px)";
+            setTimeout(() => backdrop.classList.add("invisible"), 180);
+        }
 
-									<button type="submit" class="px-4 py-2  bg-red-600 text-white font-medium
-	                     shadow-[0_12px_30px_rgba(220,38,38,0.45)]
-	                     hover:bg-red-700 active:scale-[0.98]
-	                     transition-all duration-170">
-										Delete customer
-									</button>
-								</form>
-							</div>
-						</div>
+        document.querySelectorAll(".open-delete-modal").forEach(btn => {
+            btn.addEventListener("click", () => {
+                openDeleteModal(btn.dataset.id, btn.dataset.name, btn.dataset.email);
+            });
+        });
 
-						<%@ include file="../includes/footer.jsp" %>
-
-							<script>
-								// Simple client-side search by name/email
-								document.addEventListener("DOMContentLoaded", () => {
-									const input = document.getElementById("customerSearch");
-									if (!input) return;
-
-									const rows = Array.from(document.querySelectorAll(".customer-row"));
-
-									input.addEventListener("input", () => {
-										const q = input.value.toLowerCase();
-										rows.forEach(row => {
-											const name = row.dataset.name || "";
-											const email = row.dataset.email || "";
-											const visible = name.includes(q) || email.includes(q);
-											row.style.display = visible ? "" : "none";
-										});
-									});
-								});
-								document.addEventListener("DOMContentLoaded", () => {
-									const backdrop = document.getElementById("deleteModalBackdrop");
-									const modal = document.getElementById("deleteModal");
-									const nameSpan = document.getElementById("deleteCustomerName");
-									const emailSpan = document.getElementById("deleteCustomerEmail");
-									const idSpan = document.getElementById("deleteCustomerId");
-									const userIdInput = document.getElementById("deleteUserId");
-									const cancelBtn = document.getElementById("cancelDeleteBtn");
-
-									function openDeleteModal(userId, name, email) {
-										nameSpan.textContent = name || "Unknown customer";
-										emailSpan.textContent = email || "No email";
-										idSpan.textContent = "ID: " + (userId || "—");
-										userIdInput.value = userId || "";
-
-										backdrop.classList.remove("invisible");
-										backdrop.style.opacity = "0";
-
-										// Small delay lets the browser apply initial styles before animating
-										requestAnimationFrame(() => {
-											backdrop.style.opacity = "1";
-											modal.style.transform = "translateY(0)";
-										});
-									}
-
-									function closeDeleteModal() {
-										backdrop.style.opacity = "0";
-										modal.style.transform = "translateY(16px)";
-										setTimeout(() => {
-											backdrop.classList.add("invisible");
-										}, 180);
-									}
-
-									// Hook up all delete buttons
-									document.querySelectorAll(".open-delete-modal").forEach(btn => {
-										btn.addEventListener("click", () => {
-											const id = btn.dataset.id;
-											const name = btn.dataset.name;
-											const email = btn.dataset.email;
-											openDeleteModal(id, name, email);
-										});
-									});
-
-									// Cancel button
-									if (cancelBtn) {
-										cancelBtn.addEventListener("click", closeDeleteModal);
-									}
-
-									// Click outside the modal closes it
-									backdrop.addEventListener("click", (e) => {
-										if (e.target === backdrop) {
-											closeDeleteModal();
-										}
-									});
-
-									// Escape key closes it
-									document.addEventListener("keydown", (e) => {
-										if (e.key === "Escape" && !backdrop.classList.contains("invisible")) {
-											closeDeleteModal();
-										}
-									});
-								});
-							</script>
-				</body>
-
-				</html>
+        if (cancelBtn) cancelBtn.addEventListener("click", closeDeleteModal);
+        backdrop.addEventListener("click", (e) => { if (e.target === backdrop) closeDeleteModal(); });
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !backdrop.classList.contains("invisible")) closeDeleteModal();
+        });
+    });
+    </script>
+</body>
+</html>

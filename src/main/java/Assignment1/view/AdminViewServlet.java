@@ -34,6 +34,10 @@ public class AdminViewServlet extends HttpServlet {
 			case "/admin/customers":
 				jspPath = "/admin/manage_customers.jsp";
 				break;
+			case "/admin":
+				// Redirect to dashboard servlet so it fetches API data first
+				response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+				return;
 			default:
 				jspPath = "/admin/admin_dashboard.jsp";
 		}

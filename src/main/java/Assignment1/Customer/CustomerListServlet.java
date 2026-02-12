@@ -79,6 +79,8 @@ public class CustomerListServlet extends HttpServlet {
             
             session.setAttribute("sessId", user.getUserId().toString());
             session.setAttribute("sessRole", user.getUserRole());
+            session.setAttribute("sessEmail", user.getEmail());
+            session.setAttribute("sessName", user.getName());
 
             response.sendRedirect(request.getContextPath() + "/customersServlet?action=retrieveUser");
         } else {
@@ -130,6 +132,8 @@ public class CustomerListServlet extends HttpServlet {
 
     if (user != null) {
         session.setAttribute("user", user);
+        session.setAttribute("sessEmail", user.getEmail());
+        session.setAttribute("sessName", user.getName());
         System.out.println(".() User Country retrieved: " + user.getCountryName());
         response.sendRedirect(request.getContextPath() + "/profile");
     } else {

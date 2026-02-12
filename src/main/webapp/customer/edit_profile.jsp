@@ -1,512 +1,465 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"
-  import="java.util.*,Assignment1.Customer.Customer, Assignment1.Country" %>
-  <!DOCTYPE html>
-  <html lang="en">
-
-  <head>
+    import="java.util.*,Assignment1.Customer.Customer, Assignment1.Country" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile – SilverCare</title>
 
-    <% String errText="" ; 
-    String errCode=request.getParameter("errCode"); 
-    if (errCode !=null) { errText=errCode; }
-    // Password messages from servlet String 
-    pwdError=request.getParameter("error"); 
-    String pwdSuccess=request.getParameter("success");
-    Customer u=(Customer) 
-    session.getAttribute("user"); 
-    ArrayList<Country>
-    countryList = (ArrayList<Country>) session.getAttribute("countryList");
+    <%
+        String errText = "";
+        String errCode = request.getParameter("errCode");
+        if (errCode != null) { errText = errCode; }
+        
+        String pwdError = request.getParameter("error");
+        String pwdSuccess = request.getParameter("success");
+        
+        Customer u = (Customer) session.getAttribute("user");
+        ArrayList<Country> countryList = (ArrayList<Country>) session.getAttribute("countryList");
 
         if (u == null) {
-        response.sendRedirect(request.getContextPath() + "/customersServlet?action=retrieveUser");
-        return;
+            response.sendRedirect(request.getContextPath() + "/customersServlet?action=retrieveUser");
+            return;
         }
         if (countryList == null) {
-        response.sendRedirect(request.getContextPath() + "/countryCodeServlet?origin=profile/edit");
-        return;
+            response.sendRedirect(request.getContextPath() + "/countryCodeServlet?origin=profile/edit");
+            return;
         }
 
-        // Find the flag image for this user's country_id (for dropdown default)
         String userFlagImage = null;
+        String userCountryName = "";
+        int userCountryCode = 0;
         for (Country c : countryList) {
-        if (c.getId() == u.getCountryId()) {
-        userFlagImage = c.getFlagImage();
-        break;
-        }
-        }
-        %>
-
-        <!-- Tailwind CDN (remove if already included globally) -->
-        <script src="https://cdn.tailwindcss.com"></script>
-
-        <style>
-          body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-              "Helvetica Neue", Arial, sans-serif;
-          }
-
-          .page-shell {
-            background: linear-gradient(to bottom,
-                #f6f1e9 0%,
-                #f9f4ec 45%,
-                #faf7f1 100%);
-          }
-
-          @keyframes softFadeUp {
-            0% {
-              opacity: 0;
-              transform: translateY(14px);
+            if (c.getId() == u.getCountryId()) {
+                userFlagImage = c.getFlagImage();
+                userCountryName = c.getCountryName();
+                userCountryCode = c.getCountryCode();
+                break;
             }
+        }
+    %>
 
-            100% {
-              opacity: 1;
-              transform: translateY(0);
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    serif: ['Cormorant', 'Georgia', 'serif'],
+                    sans: ['Outfit', 'system-ui', 'sans-serif'],
+                },
+                colors: {
+                    stone: { warm: '#f5f3ef', mid: '#e8e4dc', deep: '#d4cec3' },
+                    ink: { DEFAULT: '#2c2c2c', light: '#5a5a5a', muted: '#8a8a8a' },
+                    copper: { DEFAULT: '#b87a4b', light: '#d4a574' },
+                }
             }
-          }
+        }
+    }
+    </script>
+    <style>
+    html { scroll-behavior: smooth; }
+    body { -webkit-font-smoothing: antialiased; }
 
-          .card-appear {
-            opacity: 0;
-            animation: softFadeUp 0.45s ease-out 0.12s forwards;
-          }
+    .loader {
+        position: fixed;
+        inset: 0;
+        background: #f5f3ef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .loader.hidden { opacity: 0; visibility: hidden; }
+    .loader-bar {
+        width: 120px;
+        height: 2px;
+        background: #e8e4dc;
+        overflow: hidden;
+    }
+    .loader-bar::after {
+        content: '';
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: #2c2c2c;
+        animation: loadingBar 1s ease-in-out infinite;
+    }
+    @keyframes loadingBar {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(350%); }
+    }
 
-          .accent-line {
-            width: 44px;
-            height: 2px;
-            border-radius: 999px;
-            background: #1e2a38;
-          }
+    .page-content { opacity: 0; transition: opacity 0.6s ease; }
+    .page-content.visible { opacity: 1; }
 
-          /* Country dropdown */
-          .custom-dropdown {
-            position: relative;
-            width: 100%;
-            user-select: none;
-            font-size: 13px;
-          }
+    .stagger-1 { animation: fadeSlideIn 0.6s ease 0.1s both; }
+    .stagger-2 { animation: fadeSlideIn 0.6s ease 0.2s both; }
+    .stagger-3 { animation: fadeSlideIn 0.6s ease 0.3s both; }
+    .stagger-4 { animation: fadeSlideIn 0.6s ease 0.4s both; }
 
-          .custom-dropdown .selected {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 14px;
-            border: 1px solid #ddd5c7;
-            background-color: #fbf7f1;
-            padding: 10px 12px;
-            cursor: pointer;
-            color: #0f172a;
-            min-height: 42px;
-          }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-          .custom-dropdown .dropdown-list {
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            right: 0;
-            border-radius: 14px;
-            border: 1px solid #ddd5c7;
-            max-height: 230px;
-            overflow-y: auto;
-            background-color: #fefcf8;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
-          }
+    .input-field {
+        transition: border-color 0.2s ease;
+    }
+    .input-field:focus {
+        border-color: #2c2c2c;
+    }
 
-          .custom-dropdown .dropdown-item {
-            padding: 7px 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            color: #0f172a;
-            font-size: 13px;
-            white-space: nowrap;
-          }
+    .custom-dropdown {
+        position: relative;
+        width: 100%;
+        user-select: none;
+    }
+    .custom-dropdown .selected {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #e8e4dc;
+        background-color: white;
+        padding: 12px 16px;
+        cursor: pointer;
+        color: #2c2c2c;
+        min-height: 48px;
+        transition: border-color 0.2s;
+    }
+    .custom-dropdown .selected:hover {
+        border-color: #2c2c2c;
+    }
+    .custom-dropdown .dropdown-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        border: 1px solid #e8e4dc;
+        max-height: 240px;
+        overflow-y: auto;
+        background-color: white;
+        display: none;
+        z-index: 100;
+        box-shadow: 0 12px 32px rgba(44, 44, 44, 0.12);
+    }
+    .custom-dropdown .dropdown-item {
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        color: #2c2c2c;
+        font-size: 14px;
+        transition: background-color 0.15s;
+    }
+    .custom-dropdown .dropdown-item:hover {
+        background-color: #f5f3ef;
+    }
 
-          .custom-dropdown .dropdown-item:hover {
-            background-color: #f3ede3;
-          }
+    .card-section {
+        transition: transform 0.2s ease;
+    }
+    .card-section:hover {
+        transform: translateY(-1px);
+    }
+    </style>
+</head>
 
-          .profile-label {
-            font-size: 12.5px;
-            letter-spacing: 0.08em;
-          }
-        </style>
-  </head>
+<body class="bg-stone-warm text-ink font-sans font-light min-h-screen">
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="text-center">
+            <p class="font-serif text-2xl text-ink mb-6">SilverCare</p>
+            <div class="loader-bar"></div>
+        </div>
+    </div>
 
-  <body class="page-shell min-h-screen text-[#1e2a38]">
+    <div class="page-content" id="pageContent">
     <%@ include file="../includes/header.jsp" %>
 
-      <main class="pt-28 pb-20">
-        <div class="max-w-5xl mx-auto px-6 md:px-8">
+    <main class="pt-24 pb-20 px-5 md:px-12">
+        <div class="max-w-3xl mx-auto">
 
-          <!-- Page heading -->
-          <section class="mb-6 md:mb-8">
-            <p class="text-[11px] tracking-[0.18em] uppercase text-slate-500">
-              SilverCare account
-            </p>
-            <h1 class="mt-1 text-[26px] md:text-[30px] font-serif font-semibold tracking-tight text-[#1e2a38]">
-              Edit profile
-            </h1>
-            <div class="mt-3 accent-line"></div>
-          </section>
+            <!-- Page Header -->
+            <header class="mb-10">
+                <span class="text-copper text-xs uppercase tracking-[0.2em] stagger-1">Account Settings</span>
+                <h1 class="font-serif text-4xl md:text-5xl font-medium text-ink leading-tight mt-3 mb-4 stagger-2">
+                    Edit Profile
+                </h1>
+                <p class="text-ink-light text-base max-w-xl leading-relaxed stagger-3">
+                    Update your personal information and address details used for care service bookings.
+                </p>
+            </header>
 
-          <!-- Global error (profile update) -->
-          <% if (errText !=null && !errText.trim().isEmpty()) { %>
-            <div class="mb-5  border border-rose-200 bg-rose-50/85
-                    px-4 py-2.5 text-[12.5px] text-rose-700">
-              <%= errText %>
+            <!-- Global Error -->
+            <% if (errText != null && !errText.trim().isEmpty()) { %>
+            <div class="mb-6 border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700 stagger-3">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <%= errText %>
+                </div>
             </div>
             <% } %>
 
-              <!-- Profile card -->
-              <section class="card-appear  bg-[#fdfaf5]
-                      border border-[#e0dcd4]
-                      shadow-[0_14px_40px_rgba(15,23,42,0.10)]
-                      px-6 py-6 md:px-8 md:py-7">
+            <!-- Profile Information Card -->
+            <section class="card-section bg-white border border-stone-mid mb-6 stagger-3">
+                <div class="px-6 py-5 border-b border-stone-mid">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-stone-mid flex items-center justify-center">
+                            <span class="font-serif text-xl text-ink"><%= u.getName().substring(0, 1).toUpperCase() %></span>
+                        </div>
+                        <div>
+                            <h2 class="font-serif text-xl font-medium text-ink"><%= u.getName() %></h2>
+                            <p class="text-sm text-ink-muted"><%= u.getEmail() %></p>
+                        </div>
+                    </div>
+                </div>
 
-                <header class="mb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <div>
-                    <h2 class="text-[20px] md:text-[22px] font-semibold tracking-tight text-[#1e2a38]">
-                      <%= u.getFullName() %>
-                    </h2>
-                    <p class="text-[13px] text-slate-600 mt-1">
-                      Update your contact details and address for future bookings.
-                    </p>
-                  </div>
-                </header>
-
-                <div class="border-t border-[#e4dfd6] pt-5">
-                  <form method="post" action="<%= request.getContextPath() %>/customersServlet" class="space-y-6">
+                <form method="post" action="<%= request.getContextPath() %>/customersServlet" class="p-6 space-y-6">
                     <input type="hidden" name="action" value="update" />
 
-                    <!-- Name + email -->
-                    <div class="grid md:grid-cols-2 gap-4">
-                      <div class="space-y-1">
-                        <label for="name" class="profile-label block text-[11px] uppercase text-slate-500">
-                          Full name
-                        </label>
-                        <input type="text" id="name" name="name" value="<%= u.getFullName() %>" class="w-full 
-                              border border-[#ddd5c7]
-                              bg-[#fbf7f1]
-                              px-3 py-2.5 text-[13px]
-                              text-slate-900
-                              outline-none
-                              focus:border-[#1e2a38]
-                              focus:ring-1 focus:ring-[#1e2a38]
-                              transition-all duration-200" required />
-                      </div>
-
-                      <div class="space-y-1">
-                        <label for="email" class="profile-label block text-[11px] uppercase text-slate-500">
-                          Email
-                        </label>
-                        <input type="email" id="email" name="email" value="<%= u.getEmail() %>" class="w-full 
-                              border border-[#ddd5c7]
-                              bg-[#fbf7f1]
-                              px-3 py-2.5 text-[13px]
-                              text-slate-900
-                              outline-none
-                              focus:border-[#1e2a38]
-                              focus:ring-1 focus:ring-[#1e2a38]
-                              transition-all duration-200" required />
-                      </div>
+                    <!-- Name + Email -->
+                    <div class="grid md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="name" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Full Name <span class="text-copper">*</span>
+                            </label>
+                            <input type="text" id="name" name="name" value="<%= u.getName() %>" required
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Email Address <span class="text-copper">*</span>
+                            </label>
+                            <input type="email" id="email" name="email" value="<%= u.getEmail() %>" required
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
                     </div>
 
-                    <!-- Phone + country -->
-                    <div class="grid md:grid-cols-[1.1fr_1.1fr] gap-4">
-                      <div class="space-y-1">
-                        <label for="phone" class="profile-label block text-[11px] uppercase text-slate-500">
-                          Phone
-                        </label>
-                        <input type="text" id="phone" name="Phone" value="<%= u.getPhone() %>" class="w-full 
-                              border border-[#ddd5c7]
-                              bg-[#fbf7f1]
-                              px-3 py-2.5 text-[13px]
-                              text-slate-900
-                              outline-none
-                              focus:border-[#1e2a38]
-                              focus:ring-1 focus:ring-[#1e2a38]
-                              transition-all duration-200" />
-                      </div>
-
-                      <div class="space-y-1">
-                        <span class="profile-label block text-[11px] uppercase text-slate-500">
-                          Country
-                        </span>
-                        <div class="custom-dropdown">
-                          <div class="selected">
-                            <% if (userFlagImage !=null) { for (Country c : countryList) { if
-                              (c.getId()==u.getCountryId()) { %>
-                              <img src="<%= request.getContextPath() %>/images/flags/<%= c.getFlagImage() %>" width="22"
-                                style="margin-right:8px;vertical-align:middle;">
-                              +<%= c.getCountryCode() %>
-                                <%= c.getCountryName() %>
-                                  <% break; } } } else { %>
-                                    Select country
-                                    <% } %>
-                          </div>
-                          <div class="dropdown-list">
-                            <% for (Country c : countryList) { %>
-                              <div class="dropdown-item" data-id="<%= c.getId() %>"
-                                data-code="<%= c.getCountryCode() %>" data-name="<%= c.getCountryName() %>"
-                                data-image="<%= c.getFlagImage() %>">
-                                <img src="<%= request.getContextPath() %>/images/flags/<%= c.getFlagImage() %>"
-                                  alt="<%= c.getCountryName() %>" width="20" style="margin-right:8px;">
-                                +<%= c.getCountryCode() %>
-                                  <%= c.getCountryName() %>
-                              </div>
-                              <% } %>
-                          </div>
-                          <input type="hidden" name="country" id="countryInput" value="<%= u.getCountryId() %>">
+                    <!-- Phone + Country -->
+                    <div class="grid md:grid-cols-2 gap-5">
+                        <div>
+                            <label for="phone" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Phone Number
+                            </label>
+                            <input type="text" id="phone" name="Phone" value="<%= u.getPhone() %>"
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
                         </div>
-                      </div>
+                        <div>
+                            <label class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Country
+                            </label>
+                            <div class="custom-dropdown">
+                                <div class="selected">
+                                    <% if (userFlagImage != null) { %>
+                                        <img src="<%= request.getContextPath() %>/images/flags/<%= userFlagImage %>" width="20" alt="">
+                                        <span>+<%= userCountryCode %> <%= userCountryName %></span>
+                                    <% } else { %>
+                                        <span class="text-ink-muted">Select country</span>
+                                    <% } %>
+                                    <svg class="w-4 h-4 ml-auto text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                                <div class="dropdown-list">
+                                    <% for (Country c : countryList) { %>
+                                    <div class="dropdown-item" data-id="<%= c.getId() %>" data-code="<%= c.getCountryCode() %>" data-name="<%= c.getCountryName() %>" data-image="<%= c.getFlagImage() %>">
+                                        <img src="<%= request.getContextPath() %>/images/flags/<%= c.getFlagImage() %>" width="20" alt="<%= c.getCountryName() %>">
+                                        +<%= c.getCountryCode() %> <%= c.getCountryName() %>
+                                    </div>
+                                    <% } %>
+                                </div>
+                                <input type="hidden" name="country" id="countryInput" value="<%= u.getCountryId() %>">
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Street -->
-                    <div class="space-y-1">
-                      <label for="street" class="profile-label block text-[11px] uppercase text-slate-500">
-                        Street
-                      </label>
-                      <input type="text" id="street" name="Street" value="<%= u.getStreet() %>" class="w-full 
-                            border border-[#ddd5c7]
-                            bg-[#fbf7f1]
-                            px-3 py-2.5 text-[13px]
-                            text-slate-900
-                            outline-none
-                            focus:border-[#1e2a38]
-                            focus:ring-1 focus:ring-[#1e2a38]
-                            transition-all duration-200" />
+                    <div>
+                        <label for="street" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                            Street Address
+                        </label>
+                        <input type="text" id="street" name="Street" value="<%= u.getStreet() %>"
+                               class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
                     </div>
 
-                    <!-- Postal / block / unit -->
-                    <div class="grid md:grid-cols-3 gap-4">
-                      <div class="space-y-1">
-                        <label for="postal_code" class="profile-label block text-[11px] uppercase text-slate-500">
-                          Postal code
-                        </label>
-                        <input type="text" id="postal_code" name="postal_code" value="<%= u.getPostalCode() %>" class="w-full 
-                              border border-[#ddd5c7]
-                              bg-[#fbf7f1]
-                              px-3 py-2.5 text-[13px]
-                              text-slate-900
-                              outline-none
-                              focus:border-[#1e2a38]
-                              focus:ring-1 focus:ring-[#1e2a38]
-                              transition-all duration-200" />
-                      </div>
-
-                      <div class="space-y-1">
-                        <label for="block_no" class="profile-label block text-[11px] uppercase text-slate-500">
-                          Block no.
-                        </label>
-                        <input type="text" id="block_no" name="block_no" value="<%= u.getBlockNo() %>" class="w-full 
-                              border border-[#ddd5c7]
-                              bg-[#fbf7f1]
-                              px-3 py-2.5 text-[13px]
-                              text-slate-900
-                              outline-none
-                              focus:border-[#1e2a38]
-                              focus:ring-1 focus:ring-[#1e2a38]
-                              transition-all duration-200" />
-                      </div>
-
-                      <div class="space-y-1">
-                        <label for="unit_no" class="profile-label block text-[11px] uppercase text-slate-500">
-                          Unit no.
-                        </label>
-                        <input type="text" id="unit_no" name="unit_no" value="<%= u.getUnitNo() %>" class="w-full 
-                              border border-[#ddd5c7]
-                              bg-[#fbf7f1]
-                              px-3 py-2.5 text-[13px]
-                              text-slate-900
-                              outline-none
-                              focus:border-[#1e2a38]
-                              focus:ring-1 focus:ring-[#1e2a38]
-                              transition-all duration-200" />
-                      </div>
+                    <!-- Postal / Block / Unit -->
+                    <div class="grid md:grid-cols-3 gap-5">
+                        <div>
+                            <label for="postal_code" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Postal Code
+                            </label>
+                            <input type="text" id="postal_code" name="postal_code" value="<%= u.getPostalCode() %>"
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="block_no" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Block No.
+                            </label>
+                            <input type="text" id="block_no" name="block_no" value="<%= u.getBlock() %>"
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="unit_no" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Unit No.
+                            </label>
+                            <input type="text" id="unit_no" name="unit_no" value="<%= u.getUnitNumber() %>"
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
                     </div>
 
-                    <!-- Save button -->
-                    <div class="pt-2 flex justify-end">
-                      <button type="submit" class="inline-flex items-center justify-center
-                              bg-[#1e2a38] text-[#fdfaf5]
-                             text-[14px] font-medium
-                             px-5 py-3.5
-                             shadow-[0_14px_36px_rgba(15,23,42,0.32)]
-                             hover:bg-[#253447]
-                             active:scale-[0.99]
-                             transition-all duration-200">
-                        Save changes
-                      </button>
+                    <!-- Save Button -->
+                    <div class="pt-4 flex items-center justify-between border-t border-stone-mid">
+                        <a href="<%= request.getContextPath() %>/profile" class="text-sm text-ink-muted hover:text-ink transition-colors inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16l-4-4m0 0l4-4m-4 4h18"/>
+                            </svg>
+                            Back to Profile
+                        </a>
+                        <button type="submit" class="bg-ink text-stone-warm px-6 py-3 text-sm font-normal hover:bg-ink-light transition-colors inline-flex items-center gap-2">
+                            Save Changes
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </button>
                     </div>
-                  </form>
+                </form>
+            </section>
+
+            <!-- Security Card -->
+            <section class="card-section bg-white border border-stone-mid mb-6 stagger-4">
+                <div class="px-6 py-5 border-b border-stone-mid">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <div>
+                            <h2 class="font-serif text-xl font-medium text-ink">Password & Security</h2>
+                            <p class="text-sm text-ink-muted">Update your account password</p>
+                        </div>
+                    </div>
                 </div>
-              </section>
 
-              <!-- Security / change password card -->
-              <section class="mt-6  bg-[#fdfaf5]
-                      border border-[#e0dcd4]
-                      shadow-[0_10px_30px_rgba(15,23,42,0.08)]
-                      px-6 py-6 md:px-8 md:py-7">
-                <header class="mb-3">
-                  <h2 class="text-[18px] md:text-[20px] font-semibold tracking-tight text-[#1e2a38]">
-                    Password & security
-                  </h2>
-                  <p class="text-[13px] text-slate-600 mt-1">
-                    Change your account password. You’ll need your current password to confirm this change.
-                  </p>
-                </header>
-
-                <!-- Password messages -->
-                <% if (pwdError !=null && !pwdError.trim().isEmpty()) { %>
-                  <div class="mb-4  border border-rose-200 bg-rose-50/90
-                      px-4 py-2.5 text-[12.5px] text-rose-700">
+                <% if (pwdError != null && !pwdError.trim().isEmpty()) { %>
+                <div class="mx-6 mt-6 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     <%= pwdError %>
-                  </div>
-                  <% } else if (pwdSuccess !=null && !pwdSuccess.trim().isEmpty()) { %>
-                    <div class="mb-4  border border-emerald-200 bg-emerald-50/90
-                      px-4 py-2.5 text-[12.5px] text-emerald-800">
-                      <%= pwdSuccess %>
-                    </div>
-                    <% } %>
-
-                      <form method="post" action="<%= request.getContextPath() %>/customersServlet"
-                        class="space-y-4 max-w-md">
-                        <input type="hidden" name="action" value="password" />
-
-                        <div class="space-y-1">
-                          <label for="oldPassword" class="profile-label block text-[11px] uppercase text-slate-500">
-                            Current password
-                          </label>
-                          <input type="password" id="oldPassword" name="oldPassword" class="w-full 
-                          border border-[#ddd5c7]
-                          bg-[#fbf7f1]
-                          px-3 py-2.5 text-[13px]
-                          text-slate-900
-                          outline-none
-                          focus:border-[#1e2a38]
-                          focus:ring-1 focus:ring-[#1e2a38]
-                          transition-all duration-200" required />
-                        </div>
-
-                        <div class="space-y-1">
-                          <label for="newPassword" class="profile-label block text-[11px] uppercase text-slate-500">
-                            New password
-                          </label>
-                          <input type="password" id="newPassword" name="newPassword" class="w-full 
-                          border border-[#ddd5c7]
-                          bg-[#fbf7f1]
-                          px-3 py-2.5 text-[13px]
-                          text-slate-900
-                          outline-none
-                          focus:border-[#1e2a38]
-                          focus:ring-1 focus:ring-[#1e2a38]
-                          transition-all duration-200" required />
-                        </div>
-
-                        <div class="space-y-1">
-                          <label for="confirmPassword" class="profile-label block text-[11px] uppercase text-slate-500">
-                            Confirm new password
-                          </label>
-                          <input type="password" id="confirmPassword" name="confirmPassword" class="w-full 
-                          border border-[#ddd5c7]
-                          bg-[#fbf7f1]
-                          px-3 py-2.5 text-[13px]
-                          text-slate-900
-                          outline-none
-                          focus:border-[#1e2a38]
-                          focus:ring-1 focus:ring-[#1e2a38]
-                          transition-all duration-200" required />
-                        </div>
-
-                        <div class="pt-1 flex justify-start">
-                          <button type="submit" class="inline-flex items-center justify-center
-                            bg-[#1e2a38] text-[#fdfaf5]
-                           text-[13px] font-medium
-                           px-5 py-2.5
-                           shadow-[0_12px_30px_rgba(15,23,42,0.28)]
-                           hover:bg-[#253447]
-                           active:scale-[0.99]
-                           transition-all duration-200">
-                            Update password
-                          </button>
-                        </div>
-                      </form>
-              </section>
-
-              <!-- Danger zone: delete account -->
-              <section class="mt-6  border border-[#ecd9d6] bg-[#fdf4f3] px-6 py-4 md:px-7 md:py-5">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <div>
-                    <h3 class="text-[14px] font-semibold text-[#7f1d1d]">
-                      Delete account
-                    </h3>
-                    <p class="text-[12.5px] text-[#7f1d1d] mt-1">
-                      This will permanently remove your SilverCare account and all associated data.
-                      This action cannot be undone.
-                    </p>
-                  </div>
-                  <form method="get" action="<%= request.getContextPath() %>/profile/delete">
-                    <button type="submit" class="inline-flex items-center justify-center
-                            border border-[#fca5a5]
-                           bg-[#fee2e2]
-                           px-4 py-2.5 text-[13px] font-medium text-[#991b1b]
-                           hover:bg-[#fecaca]
-                           active:scale-[0.99]
-                           transition-all duration-200">
-                      Delete account
-                    </button>
-                  </form>
                 </div>
-              </section>
+                <% } else if (pwdSuccess != null && !pwdSuccess.trim().isEmpty()) { %>
+                <div class="mx-6 mt-6 border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    <%= pwdSuccess %>
+                </div>
+                <% } %>
+
+                <form method="post" action="<%= request.getContextPath() %>/customersServlet" class="p-6 space-y-5">
+                    <input type="hidden" name="action" value="password" />
+
+                    <div class="max-w-md">
+                        <label for="oldPassword" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                            Current Password <span class="text-copper">*</span>
+                        </label>
+                        <input type="password" id="oldPassword" name="oldPassword" required
+                               class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-5 max-w-md">
+                        <div>
+                            <label for="newPassword" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                New Password <span class="text-copper">*</span>
+                            </label>
+                            <input type="password" id="newPassword" name="newPassword" required
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="confirmPassword" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                Confirm Password <span class="text-copper">*</span>
+                            </label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required
+                                   class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="border border-ink text-ink px-5 py-2.5 text-sm font-normal hover:bg-ink hover:text-stone-warm transition-colors">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Danger Zone -->
+            <section class="border border-red-200 bg-red-50/50 stagger-4">
+                <div class="px-6 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h3 class="text-sm font-medium text-red-800">Delete Account</h3>
+                        <p class="text-sm text-red-700 mt-1">
+                            Permanently remove your SilverCare account and all associated data. This cannot be undone.
+                        </p>
+                    </div>
+                    <form method="get" action="<%= request.getContextPath() %>/profile/delete">
+                        <button type="submit" class="border border-red-300 bg-white text-red-700 px-5 py-2.5 text-sm font-normal hover:bg-red-100 transition-colors whitespace-nowrap">
+                            Delete Account
+                        </button>
+                    </form>
+                </div>
+            </section>
 
         </div>
-      </main>
+    </main>
 
-      <%@ include file="../includes/footer.jsp" %>
+    <%@ include file="../includes/footer.jsp" %>
+    </div>
 
-        <script>
-          document.addEventListener("DOMContentLoaded", function () {
-            const dropdown = document.querySelector(".custom-dropdown");
-            if (!dropdown) return;
+    <script>
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('pageContent').classList.add('visible');
+        }, 400);
+    });
 
-            const selected = dropdown.querySelector(".selected");
-            const dropdownList = dropdown.querySelector(".dropdown-list");
-            const hiddenInput = document.getElementById("countryInput");
+    document.addEventListener("DOMContentLoaded", function() {
+        const dropdown = document.querySelector(".custom-dropdown");
+        if (!dropdown) return;
 
-            selected.addEventListener("click", function () {
-              dropdownList.style.display =
-                dropdownList.style.display === "block" ? "none" : "block";
-            });
+        const selected = dropdown.querySelector(".selected");
+        const dropdownList = dropdown.querySelector(".dropdown-list");
+        const hiddenInput = document.getElementById("countryInput");
 
-            const items = dropdown.querySelectorAll(".dropdown-item");
-            items.forEach(item => {
-              item.addEventListener("click", function () {
+        selected.addEventListener("click", function() {
+            dropdownList.style.display = dropdownList.style.display === "block" ? "none" : "block";
+        });
+
+        dropdown.querySelectorAll(".dropdown-item").forEach(function(item) {
+            item.addEventListener("click", function() {
                 const name = item.getAttribute("data-name");
                 const code = item.getAttribute("data-code");
                 const id = item.getAttribute("data-id");
                 const flagImage = item.getAttribute("data-image");
 
-                selected.innerHTML =
-                  '<img src="<%= request.getContextPath() %>/images/flags/' +
-                  flagImage +
-                  '" width="22" style="margin-right:8px;vertical-align:middle;">' +
-                  '+' + code + ' ' + name;
+                selected.innerHTML = 
+                    '<img src="<%= request.getContextPath() %>/images/flags/' + flagImage + '" width="20" alt="">' +
+                    '<span>+' + code + ' ' + name + '</span>' +
+                    '<svg class="w-4 h-4 ml-auto text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"/></svg>';
 
                 hiddenInput.value = id;
                 dropdownList.style.display = "none";
-              });
             });
+        });
 
-            document.addEventListener("click", function (e) {
-              if (!dropdown.contains(e.target)) {
+        document.addEventListener("click", function(e) {
+            if (!dropdown.contains(e.target)) {
                 dropdownList.style.display = "none";
-              }
-            });
-          });
-        </script>
-  </body>
-
-  </html>
+            }
+        });
+    });
+    </script>
+</body>
+</html>

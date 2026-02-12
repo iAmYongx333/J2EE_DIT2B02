@@ -38,7 +38,7 @@ public class AdminCustomerDeleteServlet extends HttpServlet {
 
 		try {
 			// DELETE via API
-			int status = ApiClient.delete("/customers/" + userId);
+			int status = ApiClient.delete("/admin/customers/" + userId);
 
 			if (status == 200 || status == 204) {
 				response.sendRedirect(request.getContextPath() + "/admin/customers/list?msg=Deleted");

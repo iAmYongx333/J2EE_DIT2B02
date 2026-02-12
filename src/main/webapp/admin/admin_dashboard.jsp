@@ -1,387 +1,503 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"
     import="Assignment1.Customer.Customer" %>
-    <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard – SilverCare</title>
 
-        <!DOCTYPE html>
-        <html lang="en">
+    <%
+        Object userRole = session.getAttribute("sessRole");
+        if (userRole == null) {
+            response.sendRedirect(request.getContextPath() + "/login?errCode=NoSession");
+            return;
+        }
+        String userRoleString = userRole.toString();
+        if (!"admin".equals(userRoleString)) {
+            response.sendRedirect(request.getContextPath() + "/");
+            return;
+        }
+        Customer u = (Customer) session.getAttribute("user");
+        if (u == null) {
+            response.sendRedirect(request.getContextPath() + "/customersServlet?action=retrieveUser");
+            return;
+        }
+    %>
 
-        <head>
-            <meta charset="UTF-8" />
-            <title>SilverCare Admin Dashboard</title>
-            <% Object userRole=session.getAttribute("sessRole"); if(userRole==null){
-                response.sendRedirect(request.getContextPath()+"/login?errCode=NoSession"); return; } String
-                userRoleString=userRole.toString(); if (!"admin".equals(userRoleString)) {
-                response.sendRedirect(request.getContextPath() + "/" ); return; } Customer u=(Customer)
-                session.getAttribute("user"); if(u==null){
-                response.sendRedirect(request.getContextPath()+"/customersServlet?action=retrieveUser"); return; } %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    serif: ['Cormorant', 'Georgia', 'serif'],
+                    sans: ['Outfit', 'system-ui', 'sans-serif'],
+                },
+                colors: {
+                    stone: { warm: '#f5f3ef', mid: '#e8e4dc', deep: '#d4cec3' },
+                    ink: { DEFAULT: '#2c2c2c', light: '#5a5a5a', muted: '#8a8a8a' },
+                    copper: { DEFAULT: '#b87a4b', light: '#d4a574' },
+                }
+            }
+        }
+    }
+    </script>
+    <style>
+    html { scroll-behavior: smooth; }
+    body { -webkit-font-smoothing: antialiased; }
 
-                <!-- Tailwind -->
-                <script src="https://cdn.tailwindcss.com"></script>
+    .loader {
+        position: fixed;
+        inset: 0;
+        background: #f5f3ef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .loader.hidden { opacity: 0; visibility: hidden; }
+    .loader-bar {
+        width: 120px;
+        height: 2px;
+        background: #e8e4dc;
+        overflow: hidden;
+    }
+    .loader-bar::after {
+        content: '';
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: #2c2c2c;
+        animation: loadingBar 1s ease-in-out infinite;
+    }
+    @keyframes loadingBar {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(350%); }
+    }
 
-                <!-- GSAP (entrance animation only) -->
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    .page-content { opacity: 0; transition: opacity 0.6s ease; }
+    .page-content.visible { opacity: 1; }
 
-                <style>
-                    html,
-                    body {
-                        height: 100%;
-                    }
+    .stagger-1 { animation: fadeSlideIn 0.6s ease 0.1s both; }
+    .stagger-2 { animation: fadeSlideIn 0.6s ease 0.2s both; }
+    .stagger-3 { animation: fadeSlideIn 0.6s ease 0.3s both; }
+    .stagger-4 { animation: fadeSlideIn 0.6s ease 0.4s both; }
+    .stagger-5 { animation: fadeSlideIn 0.6s ease 0.5s both; }
 
-                    body {
-                        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                    }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
-                    .metric-card,
-                    .panel-card {
-                        transition:
-                            transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-                            box-shadow 0.25s ease,
-                            border-color 0.22s ease,
-                            background-color 0.22s ease;
-                    }
+    .metric-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        border-color: #2c2c2c;
+    }
 
-                    .metric-card:hover,
-                    .panel-card:hover {
-                        transform: translateY(-3px);
-                        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
-                        border-color: rgba(148, 163, 184, 0.7);
-                        background-color: rgba(255, 255, 255, 0.98);
-                    }
+    .action-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .action-card:hover {
+        transform: translateY(-2px);
+        border-color: #2c2c2c;
+    }
 
-                    .text-mono {
-                        font-variant-numeric: tabular-nums;
-                    }
-                </style>
-        </head>
+    .shortcut-item {
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .shortcut-item:hover {
+        background-color: #f5f3ef;
+        border-color: #2c2c2c;
+    }
 
-        <body class="bg-[#f7f4ef] text-slate-900">
+    .text-mono {
+        font-variant-numeric: tabular-nums;
+    }
+    </style>
+</head>
 
-            <%@ include file="../includes/header.jsp" %>
+<body class="bg-stone-warm text-ink font-sans font-light min-h-screen">
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="text-center">
+            <p class="font-serif text-2xl text-ink mb-6">SilverCare</p>
+            <div class="loader-bar"></div>
+        </div>
+    </div>
 
-                <main id="adminRoot" class="mt-12 min-h-screen pt-24 pb-16 px-6 sm:px-10 lg:px-16">
-                    <div class="max-w-6xl xl:max-w-7xl mx-auto space-y-12">
+    <div class="page-content" id="pageContent">
+    <%@ include file="../includes/header.jsp" %>
 
-                        <!-- HEADER -->
-                        <section id="dashHeader">
-                            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                                <div class="space-y-3">
-                                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight">
-                                        Admin Dashboard
-                                    </h1>
-                                    <p class="max-w-xl text-sm sm:text-base text-slate-700">
-                                        Review customers, services and feedback, and keep SilverCare running smoothly
-                                        from one place.
-                                    </p>
-                                </div>
+    <main class="pt-24 pb-20 px-5 md:px-12">
+        <div class="max-w-7xl mx-auto">
 
-                                <div class="flex items-center gap-4">
-                                    <div class="hidden sm:flex flex-col text-right text-[11px] text-slate-600">
-                                        <span>Today</span>
-                                        <span class="font-medium">System Overview</span>
-                                    </div>
-                                    <div
-                                        class="flex items-center gap-3  border border-slate-300/70 bg-white/90 px-4 py-3 shadow-sm">
-                                        <div class="text-xs sm:text-sm">
-                                            <p class="font-medium">
-                                                <%= u.getFullName() %>
-                                            </p>
-                                            <p class="text-slate-500">Administration</p>
-                                        </div>
-                                    </div>
-                                </div>
+            <!-- Page Header -->
+            <header class="mb-12">
+                <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                    <div>
+                        <span class="text-copper text-xs uppercase tracking-[0.2em] stagger-1">Administration</span>
+                        <h1 class="font-serif text-4xl md:text-5xl font-medium text-ink leading-tight mt-3 mb-4 stagger-2">
+                            Dashboard
+                        </h1>
+                        <p class="text-ink-light text-base max-w-xl leading-relaxed stagger-3">
+                            Manage customers, services, and feedback. Monitor platform activity from this central hub.
+                        </p>
+                    </div>
+
+                    <div class="stagger-3">
+                        <div class="bg-white border border-stone-mid px-5 py-4 inline-flex items-center gap-4">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center">
+                                <span class="font-serif text-lg text-ink"><%= u.getName().substring(0, 1).toUpperCase() %></span>
                             </div>
-                        </section>
-
-                        <!-- METRIC CARDS -->
-                        <section id="metricSection">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 lg:gap-6">
-
-                                <!-- Total Customers -->
-                                <article
-                                    class="metric-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6">
-                                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Total
-                                        Customers</p>
-                                    <p class="text-3xl sm:text-4xl font-semibold mt-3 text-mono">
-                                        <c:choose>
-                                            <c:when test="${not empty totalCustomers}">${totalCustomers}</c:when>
-                                            <c:otherwise>0</c:otherwise>
-                                        </c:choose>
-                                    </p>
-                                    <p class="text-xs text-slate-500 mt-3">
-                                        Number of registered customers in the system.
-                                    </p>
-                                </article>
-
-                                <!-- Active Services -->
-                                <article
-                                    class="metric-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6">
-                                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Active
-                                        Services</p>
-                                    <p class="text-3xl sm:text-4xl font-semibold mt-3 text-mono">
-                                        <c:choose>
-                                            <c:when test="${not empty totalServices}">${totalServices}</c:when>
-                                            <c:otherwise>0</c:otherwise>
-                                        </c:choose>
-                                    </p>
-                                    <p class="text-xs text-slate-500 mt-3">
-                                        Services currently published and visible to customers.
-                                    </p>
-                                </article>
-
-                                <!-- Feedback Entries -->
-                                <article
-                                    class="metric-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6">
-                                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Feedback
-                                        Entries</p>
-                                    <p class="text-3xl sm:text-4xl font-semibold mt-3 text-mono">
-                                        <c:choose>
-                                            <c:when test="${not empty totalFeedback}">${totalFeedback}</c:when>
-                                            <c:otherwise>0</c:otherwise>
-                                        </c:choose>
-                                    </p>
-                                    <p class="text-xs text-slate-500 mt-3">
-                                        Feedback records collected from customers.
-                                    </p>
-                                </article>
-
-                                <!-- New Users (30 days) -->
-                                <article
-                                    class="metric-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6">
-                                    <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">New Users
-                                        (30 Days)</p>
-                                    <p class="text-3xl sm:text-4xl font-semibold mt-3 text-mono">
-                                        <c:choose>
-                                            <c:when test="${not empty recentUsers}">${recentUsers}</c:when>
-                                            <c:otherwise>0</c:otherwise>
-                                        </c:choose>
-                                    </p>
-                                    <p class="text-xs text-slate-500 mt-3">
-                                        New registrations in the last thirty days.
-                                    </p>
-                                </article>
-
+                            <div>
+                                <p class="text-sm font-medium text-ink"><%= u.getName() %></p>
+                                <p class="text-xs text-ink-muted">Administrator</p>
                             </div>
-                        </section>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-                        <!-- QUICK ACTIONS + RECENT FEEDBACK -->
-                        <section id="middleSection">
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Metric Cards -->
+            <section class="mb-12 stagger-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
-                                <!-- QUICK ACTIONS -->
-                                <div class="lg:col-span-2 space-y-5">
-                                    <div class="flex items-center justify-between">
-                                        <h2 class="text-xl sm:text-2xl font-semibold tracking-tight">Quick Actions</h2>
-                                    </div>
+                    <!-- Total Customers -->
+                    <article class="metric-card bg-white border border-stone-mid p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs uppercase tracking-wide text-ink-muted">Customers</span>
+                            <svg class="w-5 h-5 text-copper" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <p class="font-serif text-4xl font-medium text-ink text-mono">
+                            <c:choose>
+                                <c:when test="${not empty totalCustomers}">${totalCustomers}</c:when>
+                                <c:otherwise>0</c:otherwise>
+                            </c:choose>
+                        </p>
+                        <p class="text-xs text-ink-muted mt-2">Total registered users</p>
+                    </article>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+                    <!-- Active Services -->
+                    <article class="metric-card bg-white border border-stone-mid p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs uppercase tracking-wide text-ink-muted">Services</span>
+                            <svg class="w-5 h-5 text-copper" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                        </div>
+                        <p class="font-serif text-4xl font-medium text-ink text-mono">
+                            <c:choose>
+                                <c:when test="${not empty totalServices}">${totalServices}</c:when>
+                                <c:otherwise>0</c:otherwise>
+                            </c:choose>
+                        </p>
+                        <p class="text-xs text-ink-muted mt-2">Active care services</p>
+                    </article>
 
-                                        <!-- Manage Services -->
-                                        <a href="${pageContext.request.contextPath}/admin/services/list"
-                                            class="panel-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6 flex flex-col">
-                                            <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wide">
-                                                Services</p>
-                                            <p class="text-base sm:text-lg font-semibold mt-3">Manage Services</p>
-                                            <p class="text-xs text-slate-600 mt-2">
-                                                Create new services or update existing details and pricing.
-                                            </p>
-                                            <span class="text-[11px] font-medium mt-4 pt-1 underline text-slate-800">
-                                                Go to services
-                                            </span>
-                                        </a>
+                    <!-- Feedback -->
+                    <article class="metric-card bg-white border border-stone-mid p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs uppercase tracking-wide text-ink-muted">Feedback</span>
+                            <svg class="w-5 h-5 text-copper" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                        </div>
+                        <p class="font-serif text-4xl font-medium text-ink text-mono">
+                            <c:choose>
+                                <c:when test="${not empty totalFeedback}">${totalFeedback}</c:when>
+                                <c:otherwise>0</c:otherwise>
+                            </c:choose>
+                        </p>
+                        <p class="text-xs text-ink-muted mt-2">Customer reviews</p>
+                    </article>
 
-                                        <!-- Manage Customers -->
-                                        <a href="${pageContext.request.contextPath}/admin/customers/list"
-                                            class="panel-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6 flex flex-col">
-                                            <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wide">
-                                                Customers</p>
-                                            <p class="text-base sm:text-lg font-semibold mt-3">Manage Customers</p>
-                                            <p class="text-xs text-slate-600 mt-2">
-                                                View customer profiles and keep their contact information accurate.
-                                            </p>
-                                            <span class="text-[11px] font-medium mt-4 pt-1 underline text-slate-800">
-                                                Go to customers
-                                            </span>
-                                        </a>
+                    <!-- New Users -->
+                    <article class="metric-card bg-white border border-stone-mid p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs uppercase tracking-wide text-ink-muted">New (30 days)</span>
+                            <svg class="w-5 h-5 text-copper" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                        <p class="font-serif text-4xl font-medium text-ink text-mono">
+                            <c:choose>
+                                <c:when test="${not empty recentUsers}">${recentUsers}</c:when>
+                                <c:otherwise>0</c:otherwise>
+                            </c:choose>
+                        </p>
+                        <p class="text-xs text-ink-muted mt-2">Recent registrations</p>
+                    </article>
 
-                                        <!-- Feedback -->
-                                        <a href="${pageContext.request.contextPath}/admin/feedback"
-                                            class="panel-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6 flex flex-col">
-                                            <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wide">
-                                                Feedback</p>
-                                            <p class="text-base sm:text-lg font-semibold mt-3">Review Feedback</p>
-                                            <p class="text-xs text-slate-600 mt-2">
-                                                Read comments from families and identify areas to improve.
-                                            </p>
-                                            <span class="text-[11px] font-medium mt-4 pt-1 underline text-slate-800">
-                                                Go to feedback
-                                            </span>
-                                        </a>
+                </div>
+            </section>
 
-                                    </div>
-                                </div>
+            <!-- Quick Actions + Recent Feedback -->
+            <section class="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                                <!-- RECENT FEEDBACK -->
-                                <aside
-                                    class="panel-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <h2 class="text-lg font-semibold tracking-tight">Recent Feedback</h2>
-                                        <a href="${pageContext.request.contextPath}/admin/feedback"
-                                            class="text-[11px] text-slate-600 hover:underline">
-                                            View all
-                                        </a>
-                                    </div>
+                <!-- Quick Actions -->
+                <div class="lg:col-span-2 stagger-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="font-serif text-2xl font-medium text-ink">Quick Actions</h2>
+                    </div>
 
-                                    <div class="space-y-3 max-h-72 overflow-y-auto pr-1 text-xs">
-                                        <c:choose>
-                                            <c:when test="${not empty recentFeedback}">
-                                                <c:forEach items="${recentFeedback}" var="fb">
-                                                    <div class=" border border-slate-200 px-4 py-3 bg-white">
-                                                        <p class="text-slate-500 mb-1">
-                                                            ${fb.user_name} · ${fb.service_name}
-                                                        </p>
-                                                        <p class="text-slate-800">
-                                                            ${fb.comments}
-                                                        </p>
-                                                        <p class="text-[11px] text-slate-400 mt-1">
-                                                            ${fb.created_at}
-                                                        </p>
-                                                    </div>
-                                                </c:forEach>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <p class="text-slate-600">
-                                                    No recent feedback yet. New feedback will appear here once customers
-                                                    start submitting reviews.
-                                                </p>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </div>
-                                </aside>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
+                        <!-- Manage Services -->
+                        <a href="${pageContext.request.contextPath}/admin/services/list" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                </svg>
                             </div>
-                        </section>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Services</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">Manage Services</h3>
+                            <p class="text-sm text-ink-muted flex-1">Create, edit, or remove care service offerings.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to services
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
 
-                        <!-- SYSTEM OVERVIEW + SHORTCUTS -->
-                        <section id="lowerSection" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Manage Customers -->
+                        <a href="${pageContext.request.contextPath}/admin/customers/list" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Customers</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">Manage Customers</h3>
+                            <p class="text-sm text-ink-muted flex-1">View and update customer profiles and accounts.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to customers
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
 
-                            <!-- SYSTEM OVERVIEW -->
-                            <section
-                                class="panel-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6">
-                                <h2 class="text-lg font-semibold tracking-tight mb-3">System Overview</h2>
-                                <p class="text-xs text-slate-600 mb-4">
-                                    High-level indicators to understand how the platform is being used before diving
-                                    into detailed pages.
-                                </p>
-
-                                <dl class="grid grid-cols-2 gap-x-6 gap-y-4 text-xs">
-                                    <div>
-                                        <dt class="text-slate-500">Total customers</dt>
-                                        <dd class="font-medium text-mono mt-1">
-                                            <c:choose>
-                                                <c:when test="${not empty totalCustomers}">${totalCustomers}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt class="text-slate-500">Active services</dt>
-                                        <dd class="font-medium text-mono mt-1">
-                                            <c:choose>
-                                                <c:when test="${not empty totalServices}">${totalServices}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt class="text-slate-500">Feedback entries</dt>
-                                        <dd class="font-medium text-mono mt-1">
-                                            <c:choose>
-                                                <c:when test="${not empty totalFeedback}">${totalFeedback}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
-                                        </dd>
-                                    </div>
-
-                                    <div>
-                                        <dt class="text-slate-500">New users (30 days)</dt>
-                                        <dd class="font-medium text-mono mt-1">
-                                            <c:choose>
-                                                <c:when test="${not empty recentUsers}">${recentUsers}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
-                                        </dd>
-                                    </div>
-                                </dl>
-
-                                <p class="text-[11px] text-slate-400 mt-4">
-                                    For deeper analysis, use the dedicated Services, Customers and Feedback pages. This
-                                    section can later be extended with bookings or revenue if needed.
-                                </p>
-                            </section>
-
-                            <!-- SHORTCUTS -->
-                            <section
-                                class="panel-card bg-white/90 border border-slate-200  px-5 py-5 sm:px-6 sm:py-6">
-                                <h2 class="text-lg font-semibold tracking-tight mb-3">Shortcuts</h2>
-                                <p class="text-xs text-slate-600 mb-4">
-                                    Jump directly to frequent actions without navigating through multiple screens.
-                                </p>
-
-                                <div class="space-y-3 text-xs">
-                                    <a href="${pageContext.request.contextPath}/admin/services/create"
-                                        class="flex items-center justify-between  border border-slate-200 px-4 py-2.5 bg-white hover:bg-slate-50">
-                                        <span>Add a new service</span>
-                                        <span class="text-[11px] text-slate-500">Services · Add</span>
-                                    </a>
-
-                                    <a href="${pageContext.request.contextPath}/admin/services"
-                                        class="flex items-center justify-between  border border-slate-200 px-4 py-2.5 bg-white hover:bg-slate-50">
-                                        <span>Review all services</span>
-                                        <span class="text-[11px] text-slate-500">Services · List</span>
-                                    </a>
-
-                                    <a href="${pageContext.request.contextPath}/admin/customers"
-                                        class="flex items-center justify-between  border border-slate-200 px-4 py-2.5 bg-white hover:bg-slate-50">
-                                        <span>View customer directory</span>
-                                        <span class="text-[11px] text-slate-500">Customers</span>
-                                    </a>
-
-                                    <a href="${pageContext.request.contextPath}/admin/feedback"
-                                        class="flex items-center justify-between  border border-slate-200 px-4 py-2.5 bg-white hover:bg-slate-50">
-                                        <span>Check latest feedback</span>
-                                        <span class="text-[11px] text-slate-500">Feedback</span>
-                                    </a>
-                                </div>
-                            </section>
-
-                        </section>
+                        <!-- Review Feedback -->
+                        <a href="${pageContext.request.contextPath}/admin/feedback" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Feedback</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">Review Feedback</h3>
+                            <p class="text-sm text-ink-muted flex-1">Read customer reviews and identify improvements.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to feedback
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
 
                     </div>
-                </main>
+                </div>
 
-                <script>
-                    document.addEventListener("DOMContentLoaded", () => {
-                        const tl = gsap.timeline({ defaults: { duration: 0.6, ease: "power2.out" } });
+                <!-- Recent Feedback -->
+                <aside class="stagger-4">
+                    <div class="bg-white border border-stone-mid h-full">
+                        <div class="px-6 py-5 border-b border-stone-mid flex items-center justify-between">
+                            <h2 class="font-serif text-lg font-medium text-ink">Recent Feedback</h2>
+                            <a href="${pageContext.request.contextPath}/admin/feedback" class="text-xs text-ink-muted hover:text-ink transition-colors">
+                                View all
+                            </a>
+                        </div>
 
-                        tl.from("#dashHeader", { y: 22, opacity: 0 })
-                            .from("#metricSection .metric-card", {
-                                y: 22,
-                                opacity: 0,
-                                stagger: 0.07
-                            }, "-=0.25")
-                            .from("#middleSection", {
-                                y: 24,
-                                opacity: 0
-                            }, "-=0.2")
-                            .from("#lowerSection", {
-                                y: 24,
-                                opacity: 0
-                            }, "-=0.25");
-                    });
-                </script>
+                        <div class="p-6 space-y-4 max-h-80 overflow-y-auto">
+                            <c:choose>
+                                <c:when test="${not empty recentFeedback}">
+                                    <c:forEach items="${recentFeedback}" var="fb">
+                                        <div class="border border-stone-mid p-4 bg-stone-warm/50">
+                                            <p class="text-xs text-ink-muted mb-2">
+                                                ${fb.userName} · ${fb.serviceName}
+                                            </p>
+                                            <p class="text-sm text-ink leading-relaxed">
+                                                ${fb.comments}
+                                            </p>
+                                            <p class="text-xs text-ink-muted mt-2">
+                                                <time data-iso="${fb.createdAt}">${fb.createdAt}</time>
+                                            </p>
+                                        </div>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="text-center py-8">
+                                        <svg class="w-10 h-10 text-stone-deep mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                        </svg>
+                                        <p class="text-sm text-ink-muted">No feedback yet</p>
+                                        <p class="text-xs text-ink-muted mt-1">Reviews will appear here</p>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </aside>
 
-        </body>
+            </section>
 
-        </html>
+            <!-- System Overview + Shortcuts -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 stagger-5">
+
+                <!-- System Overview -->
+                <div class="bg-white border border-stone-mid">
+                    <div class="px-6 py-5 border-b border-stone-mid">
+                        <h2 class="font-serif text-lg font-medium text-ink">System Overview</h2>
+                        <p class="text-sm text-ink-muted mt-1">Platform usage at a glance</p>
+                    </div>
+
+                    <div class="p-6">
+                        <dl class="grid grid-cols-2 gap-x-8 gap-y-6">
+                            <div>
+                                <dt class="text-xs uppercase tracking-wide text-ink-muted">Total Customers</dt>
+                                <dd class="font-serif text-2xl font-medium text-ink mt-1 text-mono">
+                                    <c:choose>
+                                        <c:when test="${not empty totalCustomers}">${totalCustomers}</c:when>
+                                        <c:otherwise>0</c:otherwise>
+                                    </c:choose>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs uppercase tracking-wide text-ink-muted">Active Services</dt>
+                                <dd class="font-serif text-2xl font-medium text-ink mt-1 text-mono">
+                                    <c:choose>
+                                        <c:when test="${not empty totalServices}">${totalServices}</c:when>
+                                        <c:otherwise>0</c:otherwise>
+                                    </c:choose>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs uppercase tracking-wide text-ink-muted">Feedback Entries</dt>
+                                <dd class="font-serif text-2xl font-medium text-ink mt-1 text-mono">
+                                    <c:choose>
+                                        <c:when test="${not empty totalFeedback}">${totalFeedback}</c:when>
+                                        <c:otherwise>0</c:otherwise>
+                                    </c:choose>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs uppercase tracking-wide text-ink-muted">New Users (30d)</dt>
+                                <dd class="font-serif text-2xl font-medium text-ink mt-1 text-mono">
+                                    <c:choose>
+                                        <c:when test="${not empty recentUsers}">${recentUsers}</c:when>
+                                        <c:otherwise>0</c:otherwise>
+                                    </c:choose>
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <p class="text-xs text-ink-muted mt-6 pt-6 border-t border-stone-mid">
+                            For detailed analytics, visit the individual management pages.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Shortcuts -->
+                <div class="bg-white border border-stone-mid">
+                    <div class="px-6 py-5 border-b border-stone-mid">
+                        <h2 class="font-serif text-lg font-medium text-ink">Shortcuts</h2>
+                        <p class="text-sm text-ink-muted mt-1">Quick access to common tasks</p>
+                    </div>
+
+                    <div class="p-6 space-y-3">
+                        <a href="${pageContext.request.contextPath}/admin/services/create" class="shortcut-item flex items-center justify-between border border-stone-mid px-4 py-3 bg-white">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                <span class="text-sm text-ink">Add a new service</span>
+                            </div>
+                            <span class="text-xs text-ink-muted">Services</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/services" class="shortcut-item flex items-center justify-between border border-stone-mid px-4 py-3 bg-white">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                </svg>
+                                <span class="text-sm text-ink">Review all services</span>
+                            </div>
+                            <span class="text-xs text-ink-muted">Services</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/customers" class="shortcut-item flex items-center justify-between border border-stone-mid px-4 py-3 bg-white">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span class="text-sm text-ink">View customer directory</span>
+                            </div>
+                            <span class="text-xs text-ink-muted">Customers</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/feedback" class="shortcut-item flex items-center justify-between border border-stone-mid px-4 py-3 bg-white">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                <span class="text-sm text-ink">Check latest feedback</span>
+                            </div>
+                            <span class="text-xs text-ink-muted">Feedback</span>
+                        </a>
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+    </main>
+
+    <%@ include file="../includes/footer.jsp" %>
+    </div>
+
+    <script>
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('pageContent').classList.add('visible');
+        }, 400);
+    });
+
+    // Format ISO date strings into readable dates
+    document.querySelectorAll('time[data-iso]').forEach(function(el) {
+        var iso = el.getAttribute('data-iso');
+        if (!iso) return;
+        try {
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return;
+            var now = new Date();
+            var diff = now - d;
+            var mins = Math.floor(diff / 60000);
+            var hrs = Math.floor(diff / 3600000);
+            var days = Math.floor(diff / 86400000);
+            if (mins < 1) { el.textContent = 'Just now'; }
+            else if (mins < 60) { el.textContent = mins + ' min' + (mins !== 1 ? 's' : '') + ' ago'; }
+            else if (hrs < 24) { el.textContent = hrs + ' hr' + (hrs !== 1 ? 's' : '') + ' ago'; }
+            else if (days < 7) { el.textContent = days + ' day' + (days !== 1 ? 's' : '') + ' ago'; }
+            else {
+                el.textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                    + ', ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            }
+            el.title = d.toLocaleString();
+        } catch(e) {}
+    });
+    </script>
+</body>
+</html>

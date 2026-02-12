@@ -1,7 +1,11 @@
 package Assignment1.dto;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  * DTO for dashboard statistics from the API.
+ * Maps to the DashboardStatsDTO returned by GET /admin/dashboard
  */
 public class DashboardStats {
     
@@ -9,15 +13,9 @@ public class DashboardStats {
     private int totalServices;
     private int totalFeedback;
     private int recentUsers;
+    private ArrayList<HashMap<String, Object>> recentFeedback;
 
     public DashboardStats() {}
-
-    public DashboardStats(int totalCustomers, int totalServices, int totalFeedback, int recentUsers) {
-        this.totalCustomers = totalCustomers;
-        this.totalServices = totalServices;
-        this.totalFeedback = totalFeedback;
-        this.recentUsers = recentUsers;
-    }
 
     public int getTotalCustomers() { return totalCustomers; }
     public void setTotalCustomers(int totalCustomers) { this.totalCustomers = totalCustomers; }
@@ -30,4 +28,7 @@ public class DashboardStats {
 
     public int getRecentUsers() { return recentUsers; }
     public void setRecentUsers(int recentUsers) { this.recentUsers = recentUsers; }
+
+    public ArrayList<HashMap<String, Object>> getRecentFeedback() { return recentFeedback; }
+    public void setRecentFeedback(ArrayList<HashMap<String, Object>> recentFeedback) { this.recentFeedback = recentFeedback; }
 }
