@@ -13,13 +13,8 @@ import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -29,16 +24,13 @@ import jakarta.json.JsonValue;
 
 /**
  * Servlet for customer payment history.
- * Fetches the user's bookingIds from the backend API, then fetches
- * PaymentIntents from Stripe and filters by matching bookingId in metadata.
+ * Fetches payments from the backend API by user ID.
  * URL: /customer/payments
  */
 @WebServlet("/customer/payments")
 public class PaymentHistoryServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String BACKEND_API = "http://localhost:8081/api";
-	private static final String STRIPE_API = "https://api.stripe.com/v1";
-	private static final String STRIPE_SECRET_KEY = System.getenv("STRIPE_SECRET_KEY");
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -55,106 +47,61 @@ public class PaymentHistoryServlet extends HttpServlet {
 
 		Client client = ClientBuilder.newClient();
 		try {
-			// Step 1: Get the user's booking IDs from backend
-			Set<String> userBookingIds = new HashSet<>();
-			Response bookingsResp = client.target(BACKEND_API + "/bookings/user/" + userId)
+			Response apiResp = client.target(BACKEND_API + "/payments/history/" + userId)
 					.request(MediaType.APPLICATION_JSON).get();
 
-			if (bookingsResp.getStatus() == 200) {
-				String bookingsJson = bookingsResp.readEntity(String.class);
-				if (bookingsJson != null && !bookingsJson.isBlank()) {
-					JsonReader br = Json.createReader(new StringReader(bookingsJson));
-					JsonValue bRoot = br.read();
-					br.close();
+			String json = apiResp.readEntity(String.class);
+			System.out.println("[PaymentHistory] API status " + apiResp.getStatus()
+					+ ", response length: " + (json != null ? json.length() : 0));
 
-					JsonArray bArr = null;
-					if (bRoot.getValueType() == JsonValue.ValueType.ARRAY) {
-						bArr = bRoot.asJsonArray();
-					} else if (bRoot.getValueType() == JsonValue.ValueType.OBJECT) {
-						JsonObject bObj = bRoot.asJsonObject();
-						if (bObj.containsKey("data") && !bObj.isNull("data")) {
-							bArr = bObj.getJsonArray("data");
-						}
-					}
-
-					if (bArr != null) {
-						for (int i = 0; i < bArr.size(); i++) {
-							JsonObject b = bArr.getJsonObject(i);
-							if (b.containsKey("bookingId")) {
-								userBookingIds.add(String.valueOf(b.getInt("bookingId")));
-							}
-						}
-					}
-				}
-			}
-
-			System.out.println("[PaymentHistory] User " + userId + " has "
-					+ userBookingIds.size() + " booking IDs: " + userBookingIds);
-
-			// Step 2: Fetch PaymentIntents from Stripe
-			Response stripeResp = client
-					.target(STRIPE_API + "/payment_intents")
-					.queryParam("limit", "100")
-					.queryParam("expand[]", "data.latest_charge")
-					.request(MediaType.APPLICATION_JSON)
-					.header("Authorization", "Bearer " + STRIPE_SECRET_KEY)
-					.get();
-
-			if (stripeResp.getStatus() == 200) {
-				String json = stripeResp.readEntity(String.class);
+			if (apiResp.getStatus() == 200 && json != null && !json.isBlank()) {
 				JsonReader reader = Json.createReader(new StringReader(json));
-				JsonObject root = reader.readObject();
+				JsonValue root = reader.read();
 				reader.close();
 
-				JsonArray dataArr = root.getJsonArray("data");
-				DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-						.withZone(ZoneId.of("UTC"));
+				JsonArray dataArr = null;
+				if (root.getValueType() == JsonValue.ValueType.ARRAY) {
+					dataArr = root.asJsonArray();
+				} else if (root.getValueType() == JsonValue.ValueType.OBJECT) {
+					JsonObject obj = root.asJsonObject();
+					if (obj.containsKey("data") && !obj.isNull("data")
+							&& obj.get("data").getValueType() == JsonValue.ValueType.ARRAY) {
+						dataArr = obj.getJsonArray("data");
+					}
+				}
 
 				if (dataArr != null) {
 					for (int i = 0; i < dataArr.size(); i++) {
-						JsonObject pi = dataArr.getJsonObject(i);
-
-						// Check metadata bookingId matches this user's bookings
-						String bookingId = "";
-						if (pi.containsKey("metadata") && !pi.isNull("metadata")) {
-							JsonObject meta = pi.getJsonObject("metadata");
-							bookingId = safeString(meta, "bookingId");
-						}
-
-						// Only include payments linked to this user's bookings
-						if (bookingId.isEmpty() || !userBookingIds.contains(bookingId)) {
-							continue;
-						}
-
+						JsonObject p = dataArr.getJsonObject(i);
 						HashMap<String, String> map = new HashMap<>();
-						String piId = safeString(pi, "id");
-						long amount = pi.containsKey("amount") ? pi.getJsonNumber("amount").longValue() : 0;
-						String currency = safeString(pi, "currency");
-						String status = safeString(pi, "status");
-						long created = pi.containsKey("created") ? pi.getJsonNumber("created").longValue() : 0;
 
-						// Get refund info from expanded charge
-						long refundedAmount = 0;
-						if (pi.containsKey("latest_charge") && !pi.isNull("latest_charge")) {
-							JsonValue lcVal = pi.get("latest_charge");
-							if (lcVal.getValueType() == JsonValue.ValueType.OBJECT) {
-								JsonObject charge = lcVal.asJsonObject();
-								refundedAmount = charge.containsKey("amount_refunded")
-										? charge.getJsonNumber("amount_refunded").longValue() : 0;
+						map.put("paymentId", safeString(p, "paymentId"));
+						map.put("paymentIntentId", safeString(p, "paymentIntentId"));
+						map.put("amount", safeString(p, "amount"));
+						String currency = safeString(p, "currency");
+						map.put("currency", currency.toUpperCase());
+						map.put("status", safeString(p, "status"));
+						map.put("bookingId", safeString(p, "bookingId"));
+						map.put("createdAt", safeString(p, "createdAt"));
+
+						// Sum refunds from the refunds list if present
+						long totalRefunded = 0;
+						if (p.containsKey("refunds") && !p.isNull("refunds")
+								&& p.get("refunds").getValueType() == JsonValue.ValueType.ARRAY) {
+							JsonArray refunds = p.getJsonArray("refunds");
+							for (int j = 0; j < refunds.size(); j++) {
+								JsonObject r = refunds.getJsonObject(j);
+								if (r.containsKey("amount") && !r.isNull("amount")) {
+									totalRefunded += r.getJsonNumber("amount").longValue();
+								}
 							}
 						}
+						// Fallback: use amountRefunded if present directly
+						if (totalRefunded == 0 && p.containsKey("amountRefunded") && !p.isNull("amountRefunded")) {
+							totalRefunded = p.getJsonNumber("amountRefunded").longValue();
+						}
+						map.put("totalRefunded", String.valueOf(totalRefunded));
 
-						String createdAt = created > 0
-								? dtf.format(Instant.ofEpochSecond(created)) : "";
-
-						map.put("paymentIntentId", piId);
-						map.put("amount", String.valueOf(amount));
-						map.put("currency", currency.toUpperCase());
-						map.put("status", status);
-						map.put("bookingId", bookingId);
-						map.put("createdAt", createdAt);
-						map.put("totalRefunded", String.valueOf(refundedAmount));
-						map.put("refundCount", refundedAmount > 0 ? "1" : "0");
 						payments.add(map);
 					}
 				}
