@@ -361,6 +361,42 @@
                             </span>
                         </a>
 
+                        <!-- Client Inquiry -->
+                        <a href="${pageContext.request.contextPath}/admin/client-inquiry" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Inquiry</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">Client Inquiry</h3>
+                            <p class="text-sm text-ink-muted flex-1">Search clients by area code, care needs, or service history.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to inquiry
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
+
+                        <!-- Service Visits -->
+                        <a href="${pageContext.request.contextPath}/admin/service-visits" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Visits</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">Service Visits</h3>
+                            <p class="text-sm text-ink-muted flex-1">Create and manage caregiver service visits and check-ins.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to visits
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
+
                     </div>
                 </div>
 

@@ -664,7 +664,7 @@
             statusEl.className = 'text-xs mt-1 text-copper';
             
             try {
-                const response = await fetch('http://localhost:8080/admin/upload/image', {
+                const response = await fetch('http://localhost:8081/api/admin/upload/image', {
                     method: 'POST',
                     body: formData
                 });

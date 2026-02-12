@@ -28,13 +28,19 @@
           <nav class="hidden md:flex items-center gap-8 text-sm font-light">
             <a href="<%=request.getContextPath()%>/" class="nav-link">Home</a>
             <a href="<%=request.getContextPath()%>/services" class="nav-link">Services</a>
+            <a href="<%=request.getContextPath()%>/b2b" class="nav-link">B2B Portal</a>
 
             <% if ("admin".equals(userRoleStringHeader)) { %>
               <a href="<%=request.getContextPath()%>/admin" class="nav-link">Admin</a>
+              <a href="<%=request.getContextPath()%>/admin/service-visits" class="nav-link">Service Visits</a>
             <% } %>
 
             <% if ("customer".equals(userRoleStringHeader) || "admin".equals(userRoleStringHeader)) { %>
               <a href="<%=request.getContextPath()%>/profile" class="nav-link">Profile</a>
+            <% } %>
+
+            <% if ("admin".equals(userRoleStringHeader)) { %>
+              <a href="<%=request.getContextPath()%>/admin/client-inquiry" class="nav-link">Client Inquiry</a>
             <% } %>
 
             <% if (!isLoggedInHeader) { %>
@@ -46,6 +52,7 @@
             <% } else { %>
               <a href="<%=request.getContextPath()%>/cart" class="nav-link">Cart</a>
               <a href="<%=request.getContextPath()%>/bookings" class="nav-link">Bookings</a>
+              <a href="<%=request.getContextPath()%>/customer/service-visits" class="nav-link">Visit Status</a>
               <a href="<%=request.getContextPath()%>/customer/payments" class="nav-link">Payments</a>
               <a href="<%=request.getContextPath()%>/customersServlet?action=logout" 
                  class="ml-2 px-5 py-2 bg-ink text-stone-warm text-sm font-normal hover:bg-ink-light transition-colors">
@@ -77,9 +84,12 @@
         <div class="flex-1 flex flex-col px-5 py-8 gap-1">
           <a href="<%=request.getContextPath()%>/" class="mobile-link">Home</a>
           <a href="<%=request.getContextPath()%>/services" class="mobile-link">Services</a>
+          <a href="<%=request.getContextPath()%>/b2b" class="mobile-link">B2B Portal</a>
 
           <% if ("admin".equals(userRoleStringHeader)) { %>
             <a href="<%=request.getContextPath()%>/admin" class="mobile-link">Admin</a>
+            <a href="<%=request.getContextPath()%>/admin/service-visits" class="mobile-link">Service Visits</a>
+            <a href="<%=request.getContextPath()%>/admin/client-inquiry" class="mobile-link">Client Inquiry</a>
           <% } %>
 
           <% if (!isLoggedInHeader) { %>
@@ -96,6 +106,7 @@
             <% } %>
             <a href="<%=request.getContextPath()%>/cart" class="mobile-link">Cart</a>
             <a href="<%=request.getContextPath()%>/bookings" class="mobile-link">Bookings</a>
+            <a href="<%=request.getContextPath()%>/customer/service-visits" class="mobile-link">Visit Status</a>
             <a href="<%=request.getContextPath()%>/customer/payments" class="mobile-link">Payments</a>
             <div class="mt-6 pt-6 border-t border-stone-mid">
               <a href="<%=request.getContextPath()%>/customersServlet?action=logout" 
