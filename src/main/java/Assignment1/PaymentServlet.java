@@ -2,6 +2,7 @@ package Assignment1;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,13 @@ public class PaymentServlet extends HttpServlet {
 			String userId = (String) session.getAttribute("checkoutUserId");
 			String serviceDate = (String) session.getAttribute("checkoutServiceDate");
 			String notes = (String) session.getAttribute("checkoutNotes");
+			String pendingBookingId = (String) session.getAttribute("checkoutBookingId");
 			List<CartItem> cart = (List<CartItem>) session.getAttribute("cart");
+
+			// Fallback for missing serviceDate
+			if (serviceDate == null || serviceDate.isBlank()) {
+				serviceDate = java.time.LocalDate.now().plusDays(1).toString();
+			}
 			
 			if (cart == null || cart.isEmpty()) {
 				response.setStatus(400);
@@ -61,20 +68,50 @@ public class PaymentServlet extends HttpServlet {
 				return;
 			}
 			
-			// Create booking via API for each cart item
 			boolean allSuccess = true;
 			StringBuilder bookingIds = new StringBuilder();
-			
+
+			// If a pending booking was created during checkout, update it to confirmed
+			if (pendingBookingId != null && !pendingBookingId.isBlank()) {
+				Map<String, Object> updateData = new HashMap<>();
+				updateData.put("status", "confirmed");
+				updateData.put("paymentIntentId", paymentIntentId);
+				int status = ApiClient.put("/bookings/" + pendingBookingId, updateData);
+				if (status != 200) {
+					// Non-fatal: booking exists, just status update failed
+					// Payment was already charged by Stripe at this point
+					System.out.println("[PaymentServlet] WARNING: Failed to update pending booking " + pendingBookingId + " to confirmed (status " + status + "). Booking still exists as pending.");
+				} else {
+					System.out.println("[PaymentServlet] Updated pending booking " + pendingBookingId + " to confirmed");
+				}
+			}
+
+			// Create bookings for remaining cart items (skip the first if pending booking was created)
+			boolean skipFirst = (pendingBookingId != null && !pendingBookingId.isBlank());
+			int index = 0;
 			for (CartItem item : cart) {
+				if (skipFirst && index == 0) {
+					index++;
+					continue;
+				}
+				index++;
+
+				// Build bookingDetails with this single item
+				List<Map<String, Object>> details = new ArrayList<>();
+				Map<String, Object> detail = new HashMap<>();
+				detail.put("serviceId", item.getServiceId());
+				detail.put("serviceName", item.getServiceName());
+				detail.put("quantity", item.getQuantity());
+				detail.put("unitPrice", item.getUnitPrice());
+				details.add(detail);
+
+				// Build booking payload matching backend entity structure
 				Map<String, Object> bookingData = new HashMap<>();
 				bookingData.put("userId", userId);
-				bookingData.put("serviceId", item.getServiceId());
-				bookingData.put("bookingDate", serviceDate);
-				bookingData.put("quantity", item.getQuantity());
-				bookingData.put("totalAmount", item.getLineTotal());
-				bookingData.put("notes", notes != null ? notes : "");
-				bookingData.put("paymentIntentId", paymentIntentId);
+				bookingData.put("scheduledAt", serviceDate);
 				bookingData.put("status", "confirmed");
+				bookingData.put("notes", notes != null ? notes : "");
+				bookingData.put("bookingDetails", details);
 				
 				int status = ApiClient.post("/bookings", bookingData);
 				if (status != 200 && status != 201) {
@@ -91,6 +128,7 @@ public class PaymentServlet extends HttpServlet {
 			session.removeAttribute("checkoutEmail");
 			session.removeAttribute("checkoutName");
 			session.removeAttribute("checkoutAmount");
+			session.removeAttribute("checkoutBookingId");
 			
 			if (allSuccess) {
 				out.print("{\"success\":true,\"message\":\"Booking created successfully\"}");

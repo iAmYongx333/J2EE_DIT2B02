@@ -251,7 +251,7 @@
                         <h2 class="font-serif text-2xl font-medium text-ink">Quick Actions</h2>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
 
                         <!-- Manage Services -->
                         <a href="${pageContext.request.contextPath}/admin/services/list" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
@@ -337,6 +337,24 @@
                             <p class="text-sm text-ink-muted flex-1">Monitor and manage customer appointments and reservations.</p>
                             <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
                                 Go to bookings
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
+
+                        <!-- Manage Payments -->
+                        <a href="${pageContext.request.contextPath}/admin/payments/list" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Payments</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">Manage Payments</h3>
+                            <p class="text-sm text-ink-muted flex-1">View transactions, revenue, and process refunds.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to payments
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
@@ -491,6 +509,16 @@
                                 <span class="text-sm text-ink">Check latest feedback</span>
                             </div>
                             <span class="text-xs text-ink-muted">Feedback</span>
+                        </a>
+
+                        <a href="${pageContext.request.contextPath}/admin/payments/list" class="shortcut-item flex items-center justify-between border border-stone-mid px-4 py-3 bg-white">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 text-ink-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                                </svg>
+                                <span class="text-sm text-ink">View payment transactions</span>
+                            </div>
+                            <span class="text-xs text-ink-muted">Payments</span>
                         </a>
                     </div>
                 </div>

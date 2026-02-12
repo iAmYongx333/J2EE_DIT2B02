@@ -106,7 +106,8 @@ public class CheckoutServlet extends HttpServlet {
 		session.setAttribute("checkoutName", customerName);
 		session.setAttribute("checkoutAmount", totalAmount);
 
-		System.out.println("[CheckoutServlet] Checkout data stored. Total: $" + totalAmount);
+		System.out.println("[CheckoutServlet] Checkout data stored. Total: $" + totalAmount
+				+ ", serviceDate: " + serviceDateStr + ", userId: " + userId);
 
 		// 6) Redirect to payment page
 		response.sendRedirect(request.getContextPath() + "/checkout");

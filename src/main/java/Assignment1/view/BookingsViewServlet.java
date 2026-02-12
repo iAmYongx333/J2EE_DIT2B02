@@ -20,6 +20,7 @@ public class BookingsViewServlet extends HttpServlet {
 			response.sendRedirect(request.getContextPath() + "/login");
 			return;
 		}
-		request.getRequestDispatcher("/customer/bookings.jsp").forward(request, response);
+		// Forward to BookingServlet which fetches data then renders the JSP
+		request.getRequestDispatcher("/customer/bookings").forward(request, response);
 	}
 }
