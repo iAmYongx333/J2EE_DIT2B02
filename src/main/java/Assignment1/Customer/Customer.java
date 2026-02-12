@@ -5,6 +5,7 @@ import java.util.UUID;
 public class Customer {
 
     private UUID userId;
+    private int customerId;
     private String name;
     private String email;
     private String password;
@@ -37,6 +38,9 @@ public class Customer {
 
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
+
+    public int getCustomerId() { return customerId; }
+    public void setCustomerId(int customerId) { this.customerId = customerId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

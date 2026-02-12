@@ -5,10 +5,11 @@ import java.util.Date;
 
 public class Booking {
 	private int bookingId;
+	private String customerUserId;
 	private Date scheduledAt;
 	private String status;
 	private String notes;
-	private ArrayList<BookingDetail> bookingDetails; // New field
+	private ArrayList<BookingDetail> bookingDetails;
 
 	// Constructors
 	public Booking() {
@@ -30,6 +31,14 @@ public class Booking {
 
 	public void setBookingId(int bookingId) {
 		this.bookingId = bookingId;
+	}
+
+	public String getCustomerUserId() {
+		return customerUserId;
+	}
+
+	public void setCustomerUserId(String customerUserId) {
+		this.customerUserId = customerUserId;
 	}
 
 	public Date getScheduledAt() {

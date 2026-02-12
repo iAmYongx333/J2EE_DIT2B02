@@ -46,6 +46,7 @@
             <% } else { %>
               <a href="<%=request.getContextPath()%>/cart" class="nav-link">Cart</a>
               <a href="<%=request.getContextPath()%>/bookings" class="nav-link">Bookings</a>
+              <a href="<%=request.getContextPath()%>/customer/payments" class="nav-link">Payments</a>
               <a href="<%=request.getContextPath()%>/customersServlet?action=logout" 
                  class="ml-2 px-5 py-2 bg-ink text-stone-warm text-sm font-normal hover:bg-ink-light transition-colors">
                 Logout
@@ -95,6 +96,7 @@
             <% } %>
             <a href="<%=request.getContextPath()%>/cart" class="mobile-link">Cart</a>
             <a href="<%=request.getContextPath()%>/bookings" class="mobile-link">Bookings</a>
+            <a href="<%=request.getContextPath()%>/customer/payments" class="mobile-link">Payments</a>
             <div class="mt-6 pt-6 border-t border-stone-mid">
               <a href="<%=request.getContextPath()%>/customersServlet?action=logout" 
                  class="block text-center px-6 py-3 bg-ink text-stone-warm text-sm font-normal">

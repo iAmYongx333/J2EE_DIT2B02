@@ -269,8 +269,30 @@
             }
         }
 
+        // Create a pending booking to get a bookingId (required by payment API)
+        async function createPendingBooking() {
+            console.log('[Booking] Creating pending booking...');
+            const response = await fetch(FRONTEND_URL + '/payment/prepare', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error('Failed to prepare booking: ' + errorText);
+            }
+
+            const result = await response.json();
+            if (!result.success || !result.bookingId) {
+                throw new Error(result.error || 'Failed to create pending booking');
+            }
+
+            console.log('[Booking] Pending booking created:', result.bookingId);
+            return result.bookingId;
+        }
+
         // Create PaymentIntent
-        async function createPaymentIntent() {
+        async function createPaymentIntent(bookingId) {
             const email = document.getElementById('email').value;
             
             const response = await fetch(BACKEND_URL + '/payments/intents', {
@@ -280,6 +302,7 @@
                     amount: TOTAL_AMOUNT,
                     currency: 'sgd',
                     customerId: USER_ID,
+                    bookingId: bookingId,
                     description: 'SilverCare Service Booking'
                 })
             });
@@ -329,7 +352,11 @@
             loading.classList.remove('hidden');
 
             try {
-                const { clientSecret, paymentIntentId } = await createPaymentIntent();
+                // Step 1: Create pending booking
+                const bookingId = await createPendingBooking();
+
+                // Step 2: Create payment intent with bookingId
+                const { clientSecret, paymentIntentId } = await createPaymentIntent(bookingId);
 
                 const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
                     payment_method: {

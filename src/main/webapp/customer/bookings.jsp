@@ -2,6 +2,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="Assignment1.Booking" %>
 <%@ page import="Assignment1.BookingDetail" %>
+<%@ page import="java.text.SimpleDateFormat" %>
 
 <%
     Object userRole = session.getAttribute("sessRole");
@@ -14,6 +15,7 @@
     if (bookings == null) {
         bookings = new ArrayList<Booking>();
     }
+    SimpleDateFormat displayDate = new SimpleDateFormat("d MMM yyyy");
 %>
 
 <!DOCTYPE html>
@@ -99,7 +101,7 @@
                             Booking <span class="text-ink">#<%= b.getBookingId() %></span>
                         </span>
                         <p class="mt-1 text-sm text-ink-light">
-                            Scheduled date: <span class="font-medium text-ink"><%= b.getScheduledAt() %></span>
+                            Scheduled date: <span class="font-medium text-ink"><%= b.getScheduledAt() != null ? displayDate.format(b.getScheduledAt()) : "Not set" %></span>
                         </p>
                         <% String notes = b.getNotes(); if (notes != null && !notes.trim().isEmpty()) { %>
                             <p class="mt-1 text-xs text-ink-muted">
