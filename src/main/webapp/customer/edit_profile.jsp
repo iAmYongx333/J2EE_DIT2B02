@@ -297,22 +297,104 @@
                             <label for="postal_code" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
                                 Postal Code
                             </label>
-                            <input type="text" id="postal_code" name="postal_code" value="<%= u.getPostalCode() %>"
+                            <input type="text" id="postal_code" name="postal_code" value="<%= u.getPostalCode() != null ? u.getPostalCode() : "" %>"
                                    class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
                         </div>
                         <div>
                             <label for="block_no" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
                                 Block No.
                             </label>
-                            <input type="text" id="block_no" name="block_no" value="<%= u.getBlock() %>"
+                            <input type="text" id="block_no" name="block_no" value="<%= u.getBlock() != null ? u.getBlock() : "" %>"
                                    class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
                         </div>
                         <div>
                             <label for="unit_no" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
                                 Unit No.
                             </label>
-                            <input type="text" id="unit_no" name="unit_no" value="<%= u.getUnitNumber() %>"
+                            <input type="text" id="unit_no" name="unit_no" value="<%= u.getUnitNumber() != null ? u.getUnitNumber() : "" %>"
                                    class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Personal Information -->
+                    <div class="pt-4 border-t border-stone-mid">
+                        <h3 class="text-xs uppercase tracking-wide text-ink-muted mb-4">Personal Information</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-5">
+                            <div>
+                                <label for="date_of_birth" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                    Date of Birth
+                                </label>
+                                <input type="date" id="date_of_birth" name="date_of_birth" 
+                                       value="<%= u.getDateOfBirth() != null ? u.getDateOfBirth() : "" %>"
+                                       class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="gender" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                    Gender
+                                </label>
+                                <select id="gender" name="gender"
+                                        class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                                    <option value="">Select gender</option>
+                                    <option value="Male" <%= "Male".equals(u.getGender()) ? "selected" : "" %>>Male</option>
+                                    <option value="Female" <%= "Female".equals(u.getGender()) ? "selected" : "" %>>Female</option>
+                                    <option value="Other" <%= "Other".equals(u.getGender()) ? "selected" : "" %>>Other</option>
+                                    <option value="Prefer not to say" <%= "Prefer not to say".equals(u.getGender()) ? "selected" : "" %>>Prefer not to say</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Contact -->
+                    <div class="pt-4 border-t border-stone-mid">
+                        <h3 class="text-xs uppercase tracking-wide text-ink-muted mb-4">Emergency Contact</h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-5">
+                            <div>
+                                <label for="emergency_contact_name" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                    Contact Name
+                                </label>
+                                <input type="text" id="emergency_contact_name" name="emergency_contact_name" 
+                                       value="<%= u.getEmergencyContactName() != null ? u.getEmergencyContactName() : "" %>"
+                                       placeholder="e.g. John Smith (Son)"
+                                       class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="emergency_contact_phone" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                    Contact Phone
+                                </label>
+                                <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" 
+                                       value="<%= u.getEmergencyContactPhone() != null ? u.getEmergencyContactPhone() : "" %>"
+                                       placeholder="+65 9123 4567"
+                                       class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical & Care Information -->
+                    <div class="pt-4 border-t border-stone-mid">
+                        <h3 class="text-xs uppercase tracking-wide text-ink-muted mb-4">Medical & Care Information</h3>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <label for="medical_notes" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                    Medical Notes
+                                </label>
+                                <textarea id="medical_notes" name="medical_notes" rows="4"
+                                          placeholder="Any medical conditions, allergies, medications, or health considerations our caregivers should know about..."
+                                          class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none resize-none"><%= u.getMedicalNotes() != null ? u.getMedicalNotes() : "" %></textarea>
+                                <p class="text-xs text-ink-muted mt-1">This information helps our caregivers provide better care.</p>
+                            </div>
+
+                            <div>
+                                <label for="care_preferences" class="block text-xs uppercase tracking-wide text-ink-muted mb-2">
+                                    Care Preferences
+                                </label>
+                                <textarea id="care_preferences" name="care_preferences" rows="4"
+                                          placeholder="Any specific preferences for care (e.g. preferred language, dietary restrictions, preferred caregiver gender, etc.)..."
+                                          class="input-field w-full border border-stone-mid px-4 py-3 text-sm text-ink bg-white focus:outline-none resize-none"><%= u.getCarePreferences() != null ? u.getCarePreferences() : "" %></textarea>
+                                <p class="text-xs text-ink-muted mt-1">Help us match you with the right caregiver.</p>
+                            </div>
                         </div>
                     </div>
 

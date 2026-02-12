@@ -178,6 +178,14 @@ public class CustomerListServlet extends HttpServlet {
             c.setCountryId(Integer.parseInt(request.getParameter("country")));
             c.setBlock(request.getParameter("block_no"));
             c.setUnitNumber(request.getParameter("unit_no"));
+            
+            // New fields
+            c.setDateOfBirth(request.getParameter("date_of_birth"));
+            c.setGender(request.getParameter("gender"));
+            c.setEmergencyContactName(request.getParameter("emergency_contact_name"));
+            c.setEmergencyContactPhone(request.getParameter("emergency_contact_phone"));
+            c.setMedicalNotes(request.getParameter("medical_notes"));
+            c.setCarePreferences(request.getParameter("care_preferences"));
 
             int status = ApiClient.put("/customers/" + userId, c);
 

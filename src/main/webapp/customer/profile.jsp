@@ -125,13 +125,13 @@
                 <div class="space-y-5">
                     <div class="space-y-1">
                         <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Street address</div>
-                        <p class="text-sm text-ink"><%= u.getStreet() %></p>
+                        <p class="text-sm text-ink"><%= u.getStreet() != null ? u.getStreet() : "—" %></p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-5">
                         <div class="space-y-1">
                             <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Postal code</div>
-                            <p class="text-sm text-ink"><%= u.getPostalCode() %></p>
+                            <p class="text-sm text-ink"><%= u.getPostalCode() != null ? u.getPostalCode() : "—" %></p>
                         </div>
                         <div class="space-y-1">
                             <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Block / unit</div>
@@ -146,6 +146,64 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Personal Information Section -->
+            <div class="border-t border-stone-mid pt-6 mt-6">
+                <h3 class="text-xs uppercase tracking-[0.15em] text-ink-muted mb-5">Personal Information</h3>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-5">
+                        <div class="space-y-1">
+                            <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Date of Birth</div>
+                            <p class="text-sm text-ink"><%= u.getDateOfBirth() != null ? u.getDateOfBirth() : "Not provided" %></p>
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Gender</div>
+                            <p class="text-sm text-ink"><%= u.getGender() != null ? u.getGender() : "Not specified" %></p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-5">
+                        <div class="space-y-1">
+                            <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Emergency Contact</div>
+                            <p class="text-sm text-ink"><%= u.getEmergencyContactName() != null ? u.getEmergencyContactName() : "Not provided" %></p>
+                            <% if (u.getEmergencyContactPhone() != null) { %>
+                                <p class="text-xs text-ink-muted mt-1"><%= u.getEmergencyContactPhone() %></p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical & Care Information Section -->
+            <% if (u.getMedicalNotes() != null || u.getCarePreferences() != null) { %>
+            <div class="border-t border-stone-mid pt-6 mt-6">
+                <h3 class="text-xs uppercase tracking-[0.15em] text-ink-muted mb-5">Medical & Care Information</h3>
+                
+                <div class="space-y-5">
+                    <% if (u.getMedicalNotes() != null && !u.getMedicalNotes().trim().isEmpty()) { %>
+                    <div class="space-y-1">
+                        <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Medical Notes</div>
+                        <p class="text-sm text-ink whitespace-pre-wrap"><%= u.getMedicalNotes() %></p>
+                    </div>
+                    <% } %>
+
+                    <% if (u.getCarePreferences() != null && !u.getCarePreferences().trim().isEmpty()) { %>
+                    <div class="space-y-1">
+                        <div class="text-xs uppercase tracking-[0.15em] text-ink-muted">Care Preferences</div>
+                        <p class="text-sm text-ink whitespace-pre-wrap"><%= u.getCarePreferences() %></p>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (u.getLastLogin() != null) { %>
+            <div class="border-t border-stone-mid pt-4 mt-6">
+                <p class="text-xs text-ink-muted">Last login: <%= u.getLastLogin() %></p>
+            </div>
+            <% } %>
         </div>
     </main>
 
