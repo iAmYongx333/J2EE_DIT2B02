@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(urlPatterns = {"/admin", "/admin/services", "/admin/customers"})
+@WebServlet(urlPatterns = {"/admin", "/admin/services", "/admin/customers", "/admin/bookings"})
 public class AdminViewServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -33,6 +33,9 @@ public class AdminViewServlet extends HttpServlet {
 				break;
 			case "/admin/customers":
 				jspPath = "/admin/manage_customers.jsp";
+				break;
+			case "/admin/bookings":
+				jspPath = "/admin/admin_booking.jsp";
 				break;
 			case "/admin":
 				// Redirect to dashboard servlet so it fetches API data first
