@@ -366,7 +366,17 @@
 
                     <div>
                         <label class="block text-xs uppercase tracking-wide text-ink-muted mb-2">Image path</label>
-                        <input type="text" name="image_path" class="form-input" placeholder="e.g. images/services/homecare.jpg" />
+                        <input type="text" name="image_path" id="add_image_path" class="form-input" placeholder="e.g. images/services/homecare.jpg" />
+                        <div class="mt-2">
+                            <label class="block text-xs text-ink-muted mb-2">Or upload a new image:</label>
+                            <div class="flex gap-2">
+                                <input type="file" id="add_image_file" accept="image/*" class="flex-1 text-sm file:mr-3 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-stone-mid file:text-ink hover:file:bg-stone-deep" />
+                                <button type="button" onclick="handleImageUpload('add')" class="px-4 py-2 bg-copper text-white text-xs hover:bg-copper-light transition-colors">
+                                    Upload
+                                </button>
+                            </div>
+                            <p id="add_upload_status" class="text-xs mt-1 text-ink-muted"></p>
+                        </div>
                     </div>
 
                     <div>
@@ -437,6 +447,16 @@
                     <div>
                         <label class="block text-xs uppercase tracking-wide text-ink-muted mb-2">Image path</label>
                         <input type="text" name="image_path" id="edit_image" class="form-input" />
+                        <div class="mt-2">
+                            <label class="block text-xs text-ink-muted mb-2">Or upload a new image:</label>
+                            <div class="flex gap-2">
+                                <input type="file" id="edit_image_file" accept="image/*" class="flex-1 text-sm file:mr-3 file:py-2 file:px-4 file:rounded-none file:border-0 file:bg-stone-mid file:text-ink hover:file:bg-stone-deep" />
+                                <button type="button" onclick="handleImageUpload('edit')" class="px-4 py-2 bg-copper text-white text-xs hover:bg-copper-light transition-colors">
+                                    Upload
+                                </button>
+                            </div>
+                            <p id="edit_upload_status" class="text-xs mt-1 text-ink-muted"></p>
+                        </div>
                     </div>
 
                     <div>
@@ -623,6 +643,49 @@
             if (!editBackdrop.classList.contains("invisible")) closeEditModal();
             if (!deleteBackdrop.classList.contains("invisible")) closeDeleteModal();
         });
+
+        /* ========== IMAGE UPLOAD ========== */
+        async function handleImageUpload(formType) {
+            const fileInput = document.getElementById(formType + '_image_file');
+            const statusEl = document.getElementById(formType + '_upload_status');
+            const pathInput = document.getElementById(formType + '_image_path');
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                statusEl.textContent = 'Please select an image file';
+                statusEl.className = 'text-xs mt-1 text-red-600';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            statusEl.textContent = 'Uploading...';
+            statusEl.className = 'text-xs mt-1 text-copper';
+            
+            try {
+                const response = await fetch('http://localhost:8080/admin/upload/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    pathInput.value = data.data;
+                    statusEl.textContent = '✓ Upload successful';
+                    statusEl.className = 'text-xs mt-1 text-green-600';
+                    fileInput.value = '';
+                } else {
+                    statusEl.textContent = 'Upload failed: ' + data.message;
+                    statusEl.className = 'text-xs mt-1 text-red-600';
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                statusEl.textContent = 'Upload failed. Please try again.';
+                statusEl.className = 'text-xs mt-1 text-red-600';
+            }
+        }
     });
     </script>
 </body>

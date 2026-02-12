@@ -25,9 +25,9 @@ import jakarta.json.JsonReader;
 /**
  * Admin servlet for listing all bookings via API.
  * Calls GET /admin/bookings — response wrapped in {success, message, data:[...] }
- * URL: /admin/bookings/list
+ * URL: /admin/bookings
  */
-@WebServlet("/admin/bookings/list")
+@WebServlet("/admin/bookings")
 public class AdminBookingServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private static final String API_URL = "http://localhost:8081/api/admin/bookings";
@@ -63,11 +63,17 @@ public class AdminBookingServlet extends HttpServlet {
                         HashMap<String, String> map = new HashMap<>();
 
                         // Basic booking fields
-                        map.put("bookingId", b.getString("bookingId", ""));
+                        map.put("bookingId", String.valueOf(b.getInt("bookingId", 0)));
                         map.put("serviceName", b.getString("serviceName", ""));
                         map.put("customerName", b.getString("customerName", ""));
                         map.put("customerEmail", b.getString("customerEmail", ""));
-                        map.put("bookingDate", b.getString("bookingDate", ""));
+                        // scheduledAt from DTO → format as bookingDate for JSP
+                        String scheduledAt = b.getString("scheduledAt", "");
+                        if (scheduledAt != null && !scheduledAt.isEmpty()) {
+                            // Format timestamp: 2026-02-12T14:30:00 → 2026-02-12 14:30
+                            scheduledAt = scheduledAt.replace("T", " ").substring(0, Math.min(16, scheduledAt.length()));
+                        }
+                        map.put("bookingDate", scheduledAt);
                         map.put("status", b.getString("status", ""));
 
                         bookings.add(map);
@@ -82,7 +88,7 @@ public class AdminBookingServlet extends HttpServlet {
 
         // Pass bookings list to JSP
         request.setAttribute("bookings", bookings);
-        request.getRequestDispatcher("/admin/bookings").forward(request, response);
+        request.getRequestDispatcher("/admin/admin_booking.jsp").forward(request, response);
     }
 
     @Override

@@ -307,6 +307,42 @@
                             </span>
                         </a>
 
+                        <!-- Reports & Analytics -->
+                        <a href="${pageContext.request.contextPath}/admin/reports" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Analytics</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">Reports & Analytics</h3>
+                            <p class="text-sm text-ink-muted flex-1">View service performance, customer insights, and sales data.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to reports
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
+
+                        <!-- View Bookings -->
+                        <a href="${pageContext.request.contextPath}/admin/bookings" class="action-card bg-white border border-stone-mid p-6 flex flex-col">
+                            <div class="w-10 h-10 bg-stone-mid flex items-center justify-center mb-4">
+                                <svg class="w-5 h-5 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <span class="text-xs uppercase tracking-wide text-copper mb-2">Bookings</span>
+                            <h3 class="font-serif text-lg font-medium text-ink mb-2">View Bookings</h3>
+                            <p class="text-sm text-ink-muted flex-1">Monitor and manage customer appointments and reservations.</p>
+                            <span class="text-xs text-ink mt-4 inline-flex items-center gap-1">
+                                Go to bookings
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </a>
+
                     </div>
                 </div>
 

@@ -11,6 +11,7 @@ public class ApiClient {
 
     private static final String BASE_URL = "http://localhost:8081/api";
 
+    // Use default client - TomEE 10 includes JSON-B support
     private static Client client = ClientBuilder.newClient();
 
     // ---------- GET (single object) ----------
@@ -39,10 +40,14 @@ public class ApiClient {
     public static <T> T post(String path, Object body, Class<T> responseType) {
         WebTarget target = client.target(BASE_URL + path);
         Response response = target.request(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(body, MediaType.APPLICATION_JSON));
 
         if (response.getStatus() == 200 || response.getStatus() == 201) {
-            return response.readEntity(responseType);
+            // Check if response has entity
+            if (response.hasEntity()) {
+                return response.readEntity(responseType);
+            }
         }
         return null;
     }
