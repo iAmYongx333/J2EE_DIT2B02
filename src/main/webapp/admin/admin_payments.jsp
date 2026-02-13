@@ -250,8 +250,6 @@
                                     <th class="py-3 px-4 text-left text-xs uppercase tracking-wide text-ink-muted font-normal">Reference</th>
                                     <th class="py-3 px-4 text-left text-xs uppercase tracking-wide text-ink-muted font-normal">Date</th>
                                     <th class="py-3 px-4 text-left text-xs uppercase tracking-wide text-ink-muted font-normal">Amount</th>
-                                    <th class="py-3 px-4 text-left text-xs uppercase tracking-wide text-ink-muted font-normal">Status</th>
-                                    <th class="py-3 px-4 text-right text-xs uppercase tracking-wide text-ink-muted font-normal">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -268,18 +266,6 @@
                                     try { amtCents = Long.parseLong(amtStr); } catch (Exception e) {}
                                     String amountFmt = String.format("%.2f", amtCents / 100.0);
 
-                                    String statusClass = "bg-stone-mid text-ink-light";
-                                    if ("succeeded".equalsIgnoreCase(pmStatus)) {
-                                        statusClass = "bg-forest/10 text-forest border border-forest/20";
-                                    } else if ("pending".equalsIgnoreCase(pmStatus) || "processing".equalsIgnoreCase(pmStatus)) {
-                                        statusClass = "bg-copper/10 text-copper border border-copper/20";
-                                    } else if (pmStatus != null && pmStatus.toLowerCase().startsWith("requires_")) {
-                                        statusClass = "bg-copper/10 text-copper border border-copper/20";
-                                    } else if ("failed".equalsIgnoreCase(pmStatus) || "canceled".equalsIgnoreCase(pmStatus)) {
-                                        statusClass = "bg-stone-deep text-ink-muted";
-                                    }
-
-                                    String statusDisplay = pmStatus != null ? pmStatus.replace("_", " ") : "—";
                                     String shortRef = piId != null && piId.length() > 16 ? "..." + piId.substring(piId.length() - 12) : (piId != null ? piId : "—");
                                     String searchStr = ((pmName != null ? pmName : "") + " " + (pmEmail != null ? pmEmail : "") + " " + (piId != null ? piId : "")).toLowerCase();
                                 %>
@@ -299,32 +285,6 @@
                                         <time data-iso="<%= pmCreatedAt %>"><%= pmCreatedAt %></time>
                                     </td>
                                     <td class="py-4 px-4 text-sm font-medium text-ink text-mono">$<%= amountFmt %></td>
-                                    <td class="py-4 px-4">
-                                        <span class="inline-flex items-center px-2.5 py-1 text-xs capitalize <%= statusClass %>">
-                                            <%= statusDisplay %>
-                                        </span>
-                                    </td>
-                                    <td class="py-4 px-4 text-right">
-                                        <div class="flex items-center justify-end gap-3">
-                                            <% if ("succeeded".equalsIgnoreCase(pmStatus)) { %>
-                                            <button onclick="openRefundModal('<%= piId %>', <%= amtCents %>)"
-                                                    class="text-xs text-copper hover:text-ink transition-colors inline-flex items-center gap-1">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                                                </svg>
-                                                Refund
-                                            </button>
-                                            <% } else if ("requires_payment_method".equalsIgnoreCase(pmStatus) || "requires_confirmation".equalsIgnoreCase(pmStatus) || "requires_action".equalsIgnoreCase(pmStatus) || "processing".equalsIgnoreCase(pmStatus)) { %>
-                                            <span class="text-xs text-ink-muted italic">Incomplete</span>
-                                            <% } else if ("canceled".equalsIgnoreCase(pmStatus)) { %>
-                                            <span class="text-xs text-ink-muted italic">Canceled</span>
-                                            <% } else if ("failed".equalsIgnoreCase(pmStatus)) { %>
-                                            <span class="text-xs text-ink-muted italic">Failed</span>
-                                            <% } else { %>
-                                            <span class="text-xs text-ink-muted italic">—</span>
-                                            <% } %>
-                                        </div>
-                                    </td>
                                 </tr>
                                 <% } %>
                             </tbody>
